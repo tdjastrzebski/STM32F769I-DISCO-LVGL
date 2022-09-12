@@ -1,0 +1,139 @@
+{
+    "version":"0.2.0",
+    "configurations": [
+        {
+            "name": "Debug (OpenOCD)",
+            "type":"cortex-debug",
+            "request": "launch",
+            "servertype":"openocd",
+            "showDevDebugOutput": "both",
+            "cwd": "${workspaceRoot}/BUILD",
+            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "runToEntryPoint": "main",
+            "device": "STM32F769NIHx",
+            "searchDir": ["C:/Program Files/OpenOCD/scripts"],
+            "configFiles": [
+                "/interface/stlink.cfg",
+                "/target/stm32f7x.cfg",
+            ],
+            "interface": "swd",
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 180000000,
+                "swoFrequency": 2000000,
+                "source": "probe",
+                "decoders": [
+                    { "type": "console", "label": "ITM", "port": 0 }
+                ]
+            },
+            //"debugServer": 4711
+        },
+        {
+            "name": "Debug (OpenOCD J)",
+            "type":"cortex-debug",
+            "request": "launch",
+            "servertype":"openocd",
+            "cwd": "${workspaceRoot}/BUILD",
+            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "runToEntryPoint": "main",
+            "device": "STM32F769NIHx",
+            "searchDir": ["C:/Program Files/OpenOCD/scripts"],
+            "configFiles": [
+                "/interface/jlink.cfg",
+                "/target/stm32f7x.cfg",
+            ],
+            "interface": "swd",
+            "swoConfig": {
+                "enabled": true,
+                "cpuFrequency": 8000000,
+                "swoFrequency": 2000000,
+                "source": "probe",
+                "decoders": [
+                    { "type": "console", "label": "ITM", "port": 0 }
+                ]
+            }
+        },
+        {
+            "name": "Debug (ST-Util)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype": "stutil",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "device": "STM32F769NIHx",
+            "runToEntryPoint": "main",
+            "v1": false,
+            "interface": "swd",
+            //"debugServer": 4711,
+        },
+        {
+            "name": "Debug (pyOCD)",
+            "type": "cortex-debug",
+            "request": "launch",
+            "servertype":"pyocd",
+            "showDevDebugOutput": "both",
+            "cwd": "${workspaceRoot}",
+            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "device": "STM32F769NIHx",
+            "targetId": "STM32F769NIHx",
+            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "runToEntryPoint": "main",
+            "interface": "swd"
+        },
+        {
+            "name": "Debug (pyOCD direct)",
+            "type": "cppdbg",
+            "request": "launch",
+            "MIMode": "gdb",
+            "miDebuggerPath": "arm-none-eabi-gdb",
+            "debugServerPath": "pyocd",
+            "debugServerArgs": "gdbserver -t STM32F769NIHx",
+            "program": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceRoot}",
+            "environment": [],
+            "externalConsole": false,
+            "serverLaunchTimeout": 20000,
+            "filterStderr": true,
+            "filterStdout": false,
+            "serverStarted": "GDB\\ server\\ started",
+            "setupCommands": [
+                { "text": "-environment-cd ${workspaceRoot}\\BUILD" },
+                { "text": "-target-select remote localhost:3333", "description": "connect to target", "ignoreFailures": false },
+                { "text": "-file-exec-and-symbols ${workspaceRootFolderName}.elf", "description": "load file", "ignoreFailures": false},
+                { "text": "-interpreter-exec console \"monitor endian little\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor reset\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor halt\"", "ignoreFailures": false },
+                { "text": "-interpreter-exec console \"monitor arm semihosting enable\"", "ignoreFailures": false },
+                { "text": "-target-download", "description": "flash target", "ignoreFailures": false }
+            ],
+            "logging": {
+                "moduleLoad": true,
+                "trace": true,
+                "engineLogging": true,
+                "programOutput": true,
+                "exceptions": true
+            },
+        },
+        {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                //"compile", "--target", "NUCLEO_H7A3ZI_Q", "--toolchain", "GCC_ARM", "-v", ">", "c:\\temp\\buildlog3.txt"
+                //"compile", "--supported"
+                //"config", "--global", "GCC_ARM_PATH", "C:\\Program Files (x86)\\GNU Tools ARM Embedded\\9 2019-q4-major\\bin"
+                //"new", ".", "-v"
+                //"deploy", "-v"
+                //"--toolchain", "GCC_ARM", "--target", "NUCLEO_H7A3ZI_Q", "--source", ".", "--build", ".\\BUILD\\NUCLEO_H7A3ZI_Q\\GCC_ARM", "-v"
+                "crashlog.txt", "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf", "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.map"
+            ]
+        }
+    ]
+}

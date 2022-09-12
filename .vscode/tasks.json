@@ -1,0 +1,168 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            // requires: npm install cppbuild -g
+            "label": "Build++",
+            "type": "shell",
+            "command": "cppbuild",
+            "args": [
+                "gcc",
+                "debug",
+                "-w",
+                "-d"
+            ],
+            "presentation": {
+                "clear": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Deploy (copy)",
+            "type": "shell",
+            "command": "cp",
+            "args": [
+                "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.bin",
+                "G:/"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true
+            },
+        },
+        {
+            // Requires ST-LINK Utility (https://github.com/stlink-org/stlink)
+            "label": "Deploy (ST-Link)",
+            "type": "shell",
+            "command": "st-flash",
+            "args": [
+                "--reset",
+                //"--debug",
+                "--opt",
+                "write",
+                "'${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.bin'",
+                "0x08000000",
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true
+            },
+        },
+        {
+            "label": "Deploy (pyOCD debug)",
+            "type": "shell",
+            "command": "pyocd",
+            "args": [
+                "flash",
+                "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.bin",
+                "--base-address",
+                "0x08000000",
+                "--target",
+                "STM32F769NIHx",
+                "--connect",
+                "halt",
+                "--frequency",
+                "24m"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true
+            },
+        },
+        {
+            "label": "Deploy (OpenOCD debug)",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-s",
+                "{env:OpenOCD}/scripts",
+                "-f",
+                "${workspaceRoot}/STM32F7x_STLink.cfg",
+                "-c program \"BUILD/debug/${workspaceRootFolderName}.elf\" verify reset exit"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true
+            },
+        },
+        {
+            "label": "Clean",
+            "type": "shell",
+            "command": "rm",
+            "args": [
+                "-rf",
+                "BUILD"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true
+            },
+        },
+        {
+            // Requires: npm install -g @serialport/terminal
+            "label": "Serial terminal COM4",
+            "type": "shell",
+            "command": "serialport-terminal",
+            "args": [
+                "-p",
+                "COM4",
+                "-b",
+                "115200"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "clear": true
+            },
+        }
+    ]
+}

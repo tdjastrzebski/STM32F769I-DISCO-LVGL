@@ -1,0 +1,40 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+    "C_Cpp.addWorkspaceRootToIncludePath": false,
+    "C_Cpp.intelliSenseEngine":"Default",
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.h": "c",
+        "cstdio": "c",
+        "random": "cpp",
+        "limits": "cpp",
+        "ctime": "cpp"
+    },
+    "C_Cpp.clang_format_style": "{BasedOnStyle: Google, IndentWidth: 4, IndentCaseLabels: false, TabWidth: 4, UseTab: ForIndentation, ColumnLimit: 0}",
+    "C_Cpp.clang_format_fallbackStyle": "Google", "csharp.format.enable": true,
+    "git.ignoreLimitWarning": true,
+    "cSpell.words": [
+        "BDCR",
+        "Clut",
+        "Cplt",
+        "Dfsdm",
+        "FDCAN",
+        "GPIO",
+        "LVGL",
+        "Ltdc",
+        "VDDA",
+        "VREF",
+        "eeprom",
+        "hadc",
+        "hdfsdm",
+        "hdma",
+        "hfdcan",
+        "hltdc",
+        "hrtc",
+        "hspi",
+        "htim",
+        "huart"
+    ],
+    "cortex-debug.variableUseNaturalFormat": true,
+    "cmake.configureOnOpen": false
+}

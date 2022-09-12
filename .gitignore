@@ -1,0 +1,4 @@
+/BUILD
+/Debug
+/__pycache__
+.cortex-debug.*
