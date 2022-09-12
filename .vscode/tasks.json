@@ -147,8 +147,6 @@
             "type": "shell",
             "command": "serialport-terminal",
             "args": [
-                "-p",
-                "COM4",
                 "-b",
                 "115200"
             ],

@@ -12,8 +12,7 @@
       "includePath": [
         "${workspaceRoot}",
         "Core/**",
-        "Drivers/**",
-        "Middlewares/**"
+        "Drivers/**"
       ],
       "defines": [
         "USE_HAL_DRIVER",

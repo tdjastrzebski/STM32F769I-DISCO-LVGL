@@ -22,7 +22,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "stm32f769i_discovery_lcd.h"
+#include "master.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -160,7 +160,7 @@ static void MX_DFSDM1_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+  PreInit();
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -169,7 +169,7 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  Init();
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -179,7 +179,7 @@ int main(void)
   PeriphCommonClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  SysInit();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -212,7 +212,7 @@ int main(void)
   MX_USB_OTG_HS_PCD_Init();
   MX_DFSDM1_Init();
   /* USER CODE BEGIN 2 */
-
+  PostInit();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -220,13 +220,8 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	  static uint32_t pattern = 0xf0f0f0f0;
-	  static uint32_t shift = 0;
-	  HAL_GPIO_WritePin(LD_USER2_GPIO_Port, LD_USER2_Pin, (pattern >> shift) & 0x1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-    shift++;
-	  shift %= 32;
-    HAL_Delay(200);
     /* USER CODE BEGIN 3 */
+    MainLoop();
   }
   /* USER CODE END 3 */
 }
