@@ -35,6 +35,6 @@
         "htim",
         "huart"
     ],
-    "cortex-debug.variableUseNaturalFormat": true,
+    "cortex-debug.variableUseNaturalFormat": false,
     "cmake.configureOnOpen": false
 }

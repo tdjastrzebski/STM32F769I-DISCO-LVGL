@@ -15,14 +15,25 @@
 #define SCREEN_WIDTH OTM8009A_800X480_WIDTH
 #define SCREEN_HEIGHT OTM8009A_800X480_HEIGHT
 #define DRAW_BUFFER_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10)
+#define LCD_BPP 4  // bytes per pixel
 
 extern UART_HandleTypeDef huart1;
+extern DMA2D_HandleTypeDef hdma2d;
+extern TIM_HandleTypeDef htim14;
+
 LV_FONT_DECLARE(lv_font_montserrat_48)
+static lv_disp_drv_t _disp_drv;                                    // lvgl display driver
+ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a buffer of 1/10 screen size
+
 static void LogInfo(const char* format_msg, ...);
-static void FlushBuffer(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
+static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
+static void FlushBufferStart0(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
+static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
+static void LvglRefresh(TIM_HandleTypeDef* htim);
+static void Rounder(lv_disp_drv_t* disp_drv, lv_area_t* area);
+static void CleanDCache_by_Addr_Aligned(uint32_t addr, uint32_t dsize);
 static void HelloWorld(void);
 static void LvglInit(void);
-static void DrawRectangle(lv_disp_drv_t* disp, uint32_t x1, uint32_t x2, uint32_t y1, uint32_t y2, uint32_t bgColor, uint32_t borderColor, uint32_t borderWidth);
 
 extern "C" void PreInit() {
 }
@@ -31,73 +42,109 @@ extern "C" void SysInit() {
 }
 
 extern "C" void Init() {
+	// hdma2d.XferCpltCallback = FlushBufferComplete;
+	// htim14.PeriodElapsedCallback = LvglRefresh;
 }
-
-static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE];  // declare a buffer of 1/10 screen size
 
 extern "C" void PostInit(void) {
 	BSP_LCD_Init();
 	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
-	// LvglInit();
+	LvglInit();
 	// lv_demo_widgets();
-	// HelloWorld();
+	HelloWorld();
 	LogInfo("Hello World!\n");
-	//DrawRectangle(nullptr, 10, 20, 10, 20, 0x00ffffff, 0x00ff00ff, 2);
-	uint32_t area[100] = {0};
-	memset(area, 0x00ff00ff, 100*4);
-	LL_FillBuffer(LTDC_ACTIVE_LAYER_BACKGROUND, (uint32_t*)LCD_FB_START_ADDRESS, 10, 10, 0, (uint32_t)area);
+
+	hdma2d.XferCpltCallback = FlushBufferComplete;
+	htim14.PeriodElapsedCallback = LvglRefresh;
+	// start LVGL timer 5ms
+	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt!
 }
 
 static void LvglInit(void) {
 	lv_init();
-	// static uint32_t* _ltdcFrameBuffer = (uint32_t*)LCD_FB_START_ADDRESS;
-	static lv_disp_draw_buf_t _draw_buf;                                       // lvgl display draw buffer
-	lv_disp_draw_buf_init(&_draw_buf, _lvDrawBuffer, NULL, DRAW_BUFFER_SIZE);  // Initialize the display buffer
-	static lv_disp_t* _disp;                                                   // lvgl display
-	static lv_disp_drv_t _disp_drv;                                            // lvgl display driver
-
-	lv_disp_drv_init(&_disp_drv);      // basic initialization
-	_disp_drv.flush_cb = FlushBuffer;  // set your driver function
-	_disp_drv.draw_buf = &_draw_buf;   // assign the buffer to the display
-	//_disp_drv.rounder_cb = my_lv_rounder_cb;  // set rounder function
+	static lv_disp_draw_buf_t draw_buf;                                       // lvgl display draw buffer
+	lv_disp_draw_buf_init(&draw_buf, _lvDrawBuffer, NULL, DRAW_BUFFER_SIZE);  // Initialize the display buffer
+	static lv_disp_t* disp;                                                   // lvgl display
+	lv_disp_drv_init(&_disp_drv);                                             // basic initialization
+	_disp_drv.flush_cb = FlushBufferStart;                                    // set your driver function
+	_disp_drv.draw_buf = &draw_buf;                                           // assign the buffer to the display
+	_disp_drv.rounder_cb = Rounder;                                           // set rounder function
 	_disp_drv.hor_res = SCREEN_WIDTH;
 	_disp_drv.ver_res = SCREEN_HEIGHT;
-	//_disp_drv.user_data = hdsi;
-	_disp = lv_disp_drv_register(&_disp_drv);  // finally register the driver
+	disp = lv_disp_drv_register(&_disp_drv);  // finally, register the driver
 }
 
 static void HelloWorld(void) {
-	lv_style_t fontStyle;
+	// See: https://docs.lvgl.io/latest/en/html/widgets/label.html
+	static lv_style_t fontStyle;
 	lv_style_init(&fontStyle);
 	lv_style_set_text_font(&fontStyle, &lv_font_montserrat_48);
-	lv_style_set_text_color(&fontStyle, lv_color_white());
+	lv_style_set_text_color(&fontStyle, lv_color_black());
 	lv_obj_t* screen = lv_scr_act();
 	lv_obj_t* label = lv_label_create(screen);
-	lv_label_set_text(label, "Hello World!");
-	lv_obj_align(label, LV_ALIGN_LEFT_MID, 10, 200);
+	lv_obj_add_style(label, &fontStyle, 0);
+	lv_label_set_text_static(label, "Hello World!");
+	lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
 }
 
-static void FlushBuffer(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p) {
+static void LvglRefresh(TIM_HandleTypeDef* htim) {
+	lv_tick_inc(5);
+	lv_task_handler();
+}
+
+static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* buffer) {
+	uint32_t width = lv_area_get_width(area);
+	uint32_t height = lv_area_get_height(area);
+	uint32_t bufferLength = width * height * LCD_BPP;
 	uint16_t x = area->x1;
 	uint16_t y = area->y1;
-	uint16_t w = lv_area_get_width(area);
-	uint16_t h = lv_area_get_height(area);
-	uint32_t source = (uint32_t)color_p;
-	uint32_t destination = LCD_FB_START_ADDRESS + 4 * (y * SCREEN_WIDTH + x);
-	uint16_t offset = SCREEN_WIDTH - w;
-	LL_FillBuffer(LTDC_ACTIVE_LAYER_BACKGROUND, (uint32_t*)destination, w, h, offset, source);
-	if (drv != nullptr) lv_disp_flush_ready(drv);
+	//  copy buffer using DMA2D without Pixel Format Conversion (PFC) or Blending
+	uint32_t source = (uint32_t)((uint32_t*)buffer);
+	uint32_t destination = LCD_FB_START_ADDRESS + LCD_BPP * (y * SCREEN_WIDTH + x);
+	// invalidate cache unless caching is disabled with MPU settings since DMA does not care about caching
+	// See: https://community.st.com/s/article/FAQ-DMA-is-not-working-on-STM32H7-devices
+	// cleaned region has to be 32b-aligned (decrease address, increase length)
+	CleanDCache_by_Addr_Aligned(source, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+	hdma2d.Init.Mode = DMA2D_M2M;
+	hdma2d.Init.OutputOffset = (SCREEN_WIDTH - width);
+	hdma2d.Init.ColorMode = DMA2D_OUTPUT_ARGB8888;
+	hdma2d.Instance = DMA2D;
+	HAL_DMA2D_Init(&hdma2d);
+	HAL_DMA2D_ConfigLayer(&hdma2d, 0);
+	// MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, hdma2d.Init.OutputOffset);  // modify register instead of calling HAL_DMA2D_Init()
+	HAL_StatusTypeDef status = HAL_DMA2D_Start_IT(&hdma2d, source, destination, width, height);
+}
+
+static void FlushBufferStart0(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* buffer) {
+	int32_t srcLineSize = LCD_BPP * (area->x2 - area->x1 + 1);
+	int32_t dstLineSize = LCD_BPP * SCREEN_WIDTH;
+	char* src = (char*)buffer;
+	char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
+
+	for (int32_t y = area->y1; y < area->y2; y++) {
+		// copy buffer to display line by line
+		memcpy(dst, src, srcLineSize);
+		src += srcLineSize;
+		dst += dstLineSize;
+	}
+	memcpy(dst, src, srcLineSize);  // copy the last line
+	SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, SCREEN_WIDTH * SCREEN_HEIGHT * LCD_BPP);
+
+	if (disp != NULL) lv_disp_flush_ready(disp);  // Indicate you are ready with the flushing
+}
+
+static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d) {
+	__HAL_UNLOCK(hdma2d);
+	lv_disp_flush_ready(&_disp_drv);
 }
 
 extern "C" void MainLoop(void) {
-	static uint32_t pattern = 0xffff0000;
+	static uint32_t pattern = 0xf0f0f0f0;
 	static uint32_t shift = 0;
 	HAL_GPIO_WritePin(LD_USER2_GPIO_Port, LD_USER2_Pin, (pattern >> shift) & 0x1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 	++shift %= 32;
-	HAL_Delay(10);
-	// lv_tick_inc(10);
-	// lv_task_handler();
+	HAL_Delay(100);
 }
 
 void LogInfo(const char* format_msg, ...) {
@@ -112,29 +159,27 @@ void LogInfo(const char* format_msg, ...) {
 	}
 }
 
-static void DrawRectangle(lv_disp_drv_t* disp, uint32_t x1, uint32_t x2, uint32_t y1, uint32_t y2, uint32_t bgColor, uint32_t borderColor, uint32_t borderWidth) {
-	lv_area_t area = {};
-	area.x1 = x1;
-	area.x2 = x2;
-	area.y1 = y1;
-	area.y2 = y2;
-	uint32_t width = x2 - x1 + 1;
-	uint32_t height = y2 - y1 + 1;
-	uint32_t size = width * height;
-	// lv_color_t* content = new lv_color_t[size];
-	lv_color_t content[size];
-	lv_color_t c;
-	c.full = bgColor;
-	for (uint32_t i = borderWidth * width; i < width * (height - borderWidth); i++) content[i] = c;  // fill in
-	c.full = borderColor;
-	for (uint32_t i = 0; i < borderWidth * width; i++) content[i] = c;                // bottom border
-	for (uint32_t i = (height - borderWidth) * width; i < size; i++) content[i] = c;  // top border
-	for (uint32_t i = 0; i < borderWidth; i++) {
-		for (uint32_t j = i + (borderWidth * width); j < size - (borderWidth * width); j += width) content[j] = c;              // left border
-		for (uint32_t j = width - i - 1 + (borderWidth * width); j < size - (borderWidth * width); j += width) content[j] = c;  // right border
-	}
+// SCB_CleanDCache_by_Addr(), even newest CMSIS V5.7.0, has a bug so function is re-implemented here
+__STATIC_FORCEINLINE void CleanDCache_by_Addr_Aligned(uint32_t sourceAddress, uint32_t dsize) {
+	uint32_t sourceAddressAligned = sourceAddress & ~(uint32_t)(32U - 1);
+	uint32_t lengthAligned = dsize + (sourceAddress & (uint32_t)(32U - 1));
+	lengthAligned += 32U - (lengthAligned % 32U);
 
-	FlushBuffer(nullptr, &area, content);
-	// delete[] content;
-	// std::free(content)
+	__DSB();
+
+	while (lengthAligned > 0) {
+		SCB->DCCMVAC = sourceAddressAligned;  // register accepts only 32byte aligned values, only bits 31..5 are valid
+		sourceAddressAligned += 32U;
+		lengthAligned -= 32U;
+	};
+
+	__DSB();
+	__ISB();
+}
+
+void Rounder(lv_disp_drv_t* disp_drv, lv_area_t* area) {
+	//  ensure that X1 is a multiple of 4 (32B)
+	area->x1 &= ~(uint32_t)0x03;  // decrease X1
+	// ensure that (X2+1) is a multiple of 4 (32B)
+	area->x2 += 3 - (area->x2 % 4);  // increase X2
 }
