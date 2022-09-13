@@ -27,11 +27,8 @@ ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a 
 
 static void LogInfo(const char* format_msg, ...);
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
-static void FlushBufferStart0(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
 static void LvglRefresh(TIM_HandleTypeDef* htim);
-static void Rounder(lv_disp_drv_t* disp_drv, lv_area_t* area);
-static void CleanDCache_by_Addr_Aligned(uint32_t addr, uint32_t dsize);
 static void HelloWorld(void);
 static void LvglInit(void);
 
@@ -42,8 +39,6 @@ extern "C" void SysInit() {
 }
 
 extern "C" void Init() {
-	// hdma2d.XferCpltCallback = FlushBufferComplete;
-	// htim14.PeriodElapsedCallback = LvglRefresh;
 }
 
 extern "C" void PostInit(void) {
@@ -51,8 +46,12 @@ extern "C" void PostInit(void) {
 	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
 	LvglInit();
-	// lv_demo_widgets();
-	HelloWorld();
+	//HelloWorld();
+	lv_demo_widgets();
+	//lv_demo_benchmark();	
+	//lv_demo_stress();
+	//lv_demo_music();
+	
 	LogInfo("Hello World!\n");
 
 	hdma2d.XferCpltCallback = FlushBufferComplete;
@@ -69,7 +68,6 @@ static void LvglInit(void) {
 	lv_disp_drv_init(&_disp_drv);                                             // basic initialization
 	_disp_drv.flush_cb = FlushBufferStart;                                    // set your driver function
 	_disp_drv.draw_buf = &draw_buf;                                           // assign the buffer to the display
-	_disp_drv.rounder_cb = Rounder;                                           // set rounder function
 	_disp_drv.hor_res = SCREEN_WIDTH;
 	_disp_drv.ver_res = SCREEN_HEIGHT;
 	disp = lv_disp_drv_register(&_disp_drv);  // finally, register the driver
@@ -100,12 +98,11 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	uint16_t x = area->x1;
 	uint16_t y = area->y1;
 	//  copy buffer using DMA2D without Pixel Format Conversion (PFC) or Blending
-	uint32_t source = (uint32_t)((uint32_t*)buffer);
 	uint32_t destination = LCD_FB_START_ADDRESS + LCD_BPP * (y * SCREEN_WIDTH + x);
 	// invalidate cache unless caching is disabled with MPU settings since DMA does not care about caching
 	// See: https://community.st.com/s/article/FAQ-DMA-is-not-working-on-STM32H7-devices
 	// cleaned region has to be 32b-aligned (decrease address, increase length)
-	CleanDCache_by_Addr_Aligned(source, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
 	hdma2d.Init.Mode = DMA2D_M2M;
 	hdma2d.Init.OutputOffset = (SCREEN_WIDTH - width);
 	hdma2d.Init.ColorMode = DMA2D_OUTPUT_ARGB8888;
@@ -113,29 +110,11 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	HAL_DMA2D_Init(&hdma2d);
 	HAL_DMA2D_ConfigLayer(&hdma2d, 0);
 	// MODIFY_REG(hdma2d.Instance->OOR, DMA2D_OOR_LO, hdma2d.Init.OutputOffset);  // modify register instead of calling HAL_DMA2D_Init()
-	HAL_StatusTypeDef status = HAL_DMA2D_Start_IT(&hdma2d, source, destination, width, height);
-}
-
-static void FlushBufferStart0(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* buffer) {
-	int32_t srcLineSize = LCD_BPP * (area->x2 - area->x1 + 1);
-	int32_t dstLineSize = LCD_BPP * SCREEN_WIDTH;
-	char* src = (char*)buffer;
-	char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
-
-	for (int32_t y = area->y1; y < area->y2; y++) {
-		// copy buffer to display line by line
-		memcpy(dst, src, srcLineSize);
-		src += srcLineSize;
-		dst += dstLineSize;
-	}
-	memcpy(dst, src, srcLineSize);  // copy the last line
-	SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, SCREEN_WIDTH * SCREEN_HEIGHT * LCD_BPP);
-
-	if (disp != NULL) lv_disp_flush_ready(disp);  // Indicate you are ready with the flushing
+	HAL_StatusTypeDef status = HAL_DMA2D_Start_IT(&hdma2d, (uint32_t)buffer, destination, width, height);
 }
 
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d) {
-	__HAL_UNLOCK(hdma2d);
+	//__HAL_UNLOCK(hdma2d);
 	lv_disp_flush_ready(&_disp_drv);
 }
 
@@ -159,27 +138,22 @@ void LogInfo(const char* format_msg, ...) {
 	}
 }
 
-// SCB_CleanDCache_by_Addr(), even newest CMSIS V5.7.0, has a bug so function is re-implemented here
-__STATIC_FORCEINLINE void CleanDCache_by_Addr_Aligned(uint32_t sourceAddress, uint32_t dsize) {
-	uint32_t sourceAddressAligned = sourceAddress & ~(uint32_t)(32U - 1);
-	uint32_t lengthAligned = dsize + (sourceAddress & (uint32_t)(32U - 1));
-	lengthAligned += 32U - (lengthAligned % 32U);
+/* FlushBufferStart() without using DMA2D
+static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* buffer) {
+	int32_t srcLineSize = LCD_BPP * (area->x2 - area->x1 + 1);
+	int32_t dstLineSize = LCD_BPP * SCREEN_WIDTH;
+	char* src = (char*)buffer;
+	char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
 
-	__DSB();
+	for (int32_t y = area->y1; y < area->y2; y++) {
+		// copy buffer to display line by line
+		memcpy(dst, src, srcLineSize);
+		src += srcLineSize;
+		dst += dstLineSize;
+	}
+	memcpy(dst, src, srcLineSize);  // copy the last line
+	SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, SCREEN_WIDTH * SCREEN_HEIGHT * LCD_BPP);
 
-	while (lengthAligned > 0) {
-		SCB->DCCMVAC = sourceAddressAligned;  // register accepts only 32byte aligned values, only bits 31..5 are valid
-		sourceAddressAligned += 32U;
-		lengthAligned -= 32U;
-	};
-
-	__DSB();
-	__ISB();
+	if (disp != NULL) lv_disp_flush_ready(disp);  // Indicate you are ready with the flushing
 }
-
-void Rounder(lv_disp_drv_t* disp_drv, lv_area_t* area) {
-	//  ensure that X1 is a multiple of 4 (32B)
-	area->x1 &= ~(uint32_t)0x03;  // decrease X1
-	// ensure that (X2+1) is a multiple of 4 (32B)
-	area->x2 += 3 - (area->x2 % 4);  // increase X2
-}
+*/
