@@ -23,7 +23,7 @@ extern DMA2D_HandleTypeDef hdma2d;
 extern TIM_HandleTypeDef htim14;
 
 LV_FONT_DECLARE(lv_font_montserrat_48)
-static lv_disp_drv_t _disp_drv;                                     // lvgl display driver
+static lv_disp_drv_t _disp_drv;                                    // lvgl display driver
 ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a buffer of 1/10 screen size
 
 static void LogInfo(const char* format_msg, ...);
@@ -48,8 +48,8 @@ extern "C" void PostInit(void) {
 
 	LvglInit();
 	// HelloWorld();
-	//lv_demo_widgets();
-	lv_demo_benchmark();
+	lv_demo_widgets();
+	// lv_demo_benchmark();
 	// lv_demo_stress();
 	// lv_demo_music();
 
@@ -86,11 +86,11 @@ static void HelloWorld(void) {
 static void LvglInit(void) {
 	lv_init();
 	// initize display
-	static lv_disp_draw_buf_t draw_buf;                                                  // lvgl display draw buffer
+	static lv_disp_draw_buf_t draw_buf;                                          // lvgl display draw buffer
 	lv_disp_draw_buf_init(&draw_buf, _lvDrawBuffer, nullptr, DRAW_BUFFER_SIZE);  // Initialize the display buffer
-	lv_disp_drv_init(&_disp_drv);                                                        // basic initialization
-	_disp_drv.flush_cb = FlushBufferStart;                                               // set your driver function
-	_disp_drv.draw_buf = &draw_buf;                                                      // assign the buffer to the display
+	lv_disp_drv_init(&_disp_drv);                                                // basic initialization
+	_disp_drv.flush_cb = FlushBufferStart;                                       // set your driver function
+	_disp_drv.draw_buf = &draw_buf;                                              // assign the buffer to the display
 	_disp_drv.hor_res = SCREEN_WIDTH;
 	_disp_drv.ver_res = SCREEN_HEIGHT;
 	lv_disp_drv_register(&_disp_drv);  // finally, register the driver
