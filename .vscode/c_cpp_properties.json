@@ -8,11 +8,14 @@
       "cStandard": "gnu17",
       "cppStandard": "gnu++17",
       "forcedInclude": [
+        "lv_conf.h",
+        "lvgl/demos/lv_demos.h"
       ],
       "includePath": [
         "${workspaceRoot}",
         "Core/**",
-        "Drivers/**"
+        "Drivers/**",
+        "lvgl/**"
       ],
       "defines": [
         "USE_HAL_DRIVER",

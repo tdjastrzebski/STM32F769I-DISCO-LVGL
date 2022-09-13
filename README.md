@@ -1,5 +1,7 @@
 # STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo
-This software package demonstrates how to set up LCD display on STM32F769I-DISCO board.
+This software package demonstrates how to set up LCD display on STM32F769I-DISCO board with LVGL embedded graphics library
+https://github.com/lvgl/lvgl
+
 # VS Code Environment Setup
 ## Prerequisites
 * NodeJS
