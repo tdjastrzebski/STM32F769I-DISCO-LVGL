@@ -1,7 +1,7 @@
-/*---------------------------------------------------------------------------------------------
+/*---------------------------------------------------------------------------------------------------
  *  Copyright (c) 2022 Tomasz Jastrzębski. All rights reserved.
- *  Licensed under the MIT License. See License.md in the project root for license information.
- *--------------------------------------------------------------------------------------------*/
+ *  Licensed under the GPL 3.0 License. See LICENSE file in the project root for license information.
+ *-------------------------------------------------------------------------------------------------*/
 #include "master.h"
 
 #include <cstdarg>
