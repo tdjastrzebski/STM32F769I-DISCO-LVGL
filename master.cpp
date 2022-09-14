@@ -166,11 +166,11 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	static uint8_t i = 0;
 
 	if (GPIO_Pin == B_USER_Pin) {
-		lv_timer_t* timer = lv_timer_get_next(nullptr);
-		while (timer != nullptr) {
-			lv_timer_del(timer);
-			timer = lv_timer_get_next(timer);
-		}
+		// lv_timer_t* timer = lv_timer_get_next(nullptr);
+		// while (timer != nullptr) {
+		// 	lv_timer_del(timer);
+		// 	timer = lv_timer_get_next(timer);
+		// }
 		lv_obj_clean(lv_scr_act());
 		++i %= 5;
 
