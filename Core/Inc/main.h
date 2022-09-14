@@ -290,6 +290,7 @@ void Error_Handler(void);
 #define RMII_REF_CLK_GPIO_Port GPIOA
 #define B_USER_Pin GPIO_PIN_0
 #define B_USER_GPIO_Port GPIOA
+#define B_USER_EXTI_IRQn EXTI0_IRQn
 #define ARD_A1_Pin GPIO_PIN_4
 #define ARD_A1_GPIO_Port GPIOA
 #define RMII_RXD0_Pin GPIO_PIN_4

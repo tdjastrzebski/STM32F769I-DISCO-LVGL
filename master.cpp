@@ -12,6 +12,7 @@
 #include "main.h"
 #include "stm32f769i_discovery_lcd.h"
 #include "stm32f769i_discovery_ts.h"
+#include "stm32f7xx_hal.h"
 
 #define SCREEN_WIDTH OTM8009A_800X480_WIDTH
 #define SCREEN_HEIGHT OTM8009A_800X480_HEIGHT
@@ -47,8 +48,8 @@ extern "C" void PostInit(void) {
 	BSP_TS_Init(800, 472);
 
 	LvglInit();
-	// HelloWorld();
-	lv_demo_widgets();
+	HelloWorld();
+	// lv_demo_widgets();
 	// lv_demo_benchmark();
 	// lv_demo_stress();
 	// lv_demo_music();
@@ -158,6 +159,43 @@ void LogInfo(const char* format_msg, ...) {
 
 	if (HAL_OK != HAL_UART_Transmit(&huart1, (uint8_t*)textBuffer, len, 0xFFFFFFFF)) {
 		Error_Handler();
+	}
+}
+
+extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	static uint8_t i = 0;
+
+	if (GPIO_Pin == B_USER_Pin) {
+		lv_timer_t* timer = lv_timer_get_next(nullptr);
+		while (timer != nullptr) {
+			lv_timer_del(timer);
+			timer = lv_timer_get_next(timer);
+		}
+		lv_obj_clean(lv_scr_act());
+		++i %= 5;
+
+		switch (i) {
+		case 0: {
+			HelloWorld();
+			break;
+		}
+		case 1: {
+			lv_demo_widgets();
+			break;
+		}
+		case 2: {
+			lv_demo_benchmark();
+			break;
+		}
+		case 3: {
+			lv_demo_stress();
+			break;
+		}
+		case 4: {
+			lv_demo_music();
+			break;
+		}
+		}
 	}
 }
 
