@@ -26,26 +26,6 @@
             }
         },
         {
-            "label": "Deploy (copy)",
-            "type": "shell",
-            "command": "cp",
-            "args": [
-                "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.bin",
-                "G:/"
-            ],
-            "options": {
-                "cwd": "${workspaceRoot}"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "problemMatcher": [],
-            "presentation": {
-                "clear": true
-            },
-        },
-        {
             // Requires ST-LINK Utility (https://github.com/stlink-org/stlink)
             "label": "Deploy (ST-Link)",
             "type": "shell",
@@ -143,7 +123,7 @@
         },
         {
             // Requires: npm install -g @serialport/terminal
-            "label": "Serial terminal COM4",
+            "label": "Serial terminal",
             "type": "shell",
             "command": "serialport-terminal",
             "args": [

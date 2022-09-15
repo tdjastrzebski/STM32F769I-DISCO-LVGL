@@ -14,10 +14,11 @@ Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO
 * `pyocd pack find stm32f769`
 * `pyocd pack install STM32F769NIHx`
 ## OpenOCD
-* Download the latest version from https://github.com/xpack-dev-tools/openocd-xpack/releases  
+* Download the latest version from https://github.com/xpack-dev-tools/openocd-xpack/releases
 or build yourself following [this guide](https://github.com/Marus/cortex-debug/wiki/How-to-build-current-OpenOCD-version-on-Windows)
 * Unzip it to `OpenOCD` folder in `C:\Program Files`
-* Add `C:\Program Files\OpenOCD\bin` to system PATH variable
+* Set `OpenOCD` system variable to 'C:\Program Files\OpenOCD'
+* Add `%OpenOCD%\bin` to system PATH variable
 > Note: xpm utility does not really support global installations (yet), hence I suggest the above approach.
 ## SVD file - MPU specific
 Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and place in the Software root folder.
