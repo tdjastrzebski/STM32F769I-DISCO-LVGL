@@ -7,12 +7,12 @@
             "request": "launch",
             "servertype":"openocd",
             "showDevDebugOutput": "both",
-            "cwd": "${workspaceRoot}/BUILD",
-            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
-            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "cwd": "${workspaceRoot}",
+            "executable": "BUILD/debug/${workspaceRootFolderName}.elf",
+            "svdFile": "STM32F7x9.svd",
             "runToEntryPoint": "main",
             "device": "STM32F769NIHx",
-            "searchDir": ["C:/Program Files/OpenOCD/scripts"],
+            "searchDir": ["${env:OpenOCD}/scripts"],
             "configFiles": [
                 "/interface/stlink.cfg",
                 "/target/stm32f7x.cfg",
@@ -34,9 +34,9 @@
             "type":"cortex-debug",
             "request": "launch",
             "servertype":"openocd",
-            "cwd": "${workspaceRoot}/BUILD",
-            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
-            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "cwd": "${workspaceRoot}",
+            "executable": "BUILD/debug/${workspaceRootFolderName}.elf",
+            "svdFile": "STM32F7x9.svd",
             "runToEntryPoint": "main",
             "device": "STM32F769NIHx",
             "searchDir": ["C:/Program Files/OpenOCD/scripts"],
@@ -61,8 +61,8 @@
             "request": "launch",
             "servertype": "stutil",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
-            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "executable": "BUILD/debug/${workspaceRootFolderName}.elf",
+            "svdFile": "STM32F7x9.svd",
             "device": "STM32F769NIHx",
             "runToEntryPoint": "main",
             "v1": false,
@@ -76,10 +76,10 @@
             "servertype":"pyocd",
             "showDevDebugOutput": "both",
             "cwd": "${workspaceRoot}",
-            "executable": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "executable": "BUILD/debug/${workspaceRootFolderName}.elf",
             "device": "STM32F769NIHx",
             "targetId": "STM32F769NIHx",
-            "svdFile": "${workspaceRoot}/STM32F7x9.svd",
+            "svdFile": "STM32F7x9.svd",
             "runToEntryPoint": "main",
             "interface": "swd"
         },
@@ -91,7 +91,7 @@
             "miDebuggerPath": "arm-none-eabi-gdb",
             "debugServerPath": "pyocd",
             "debugServerArgs": "gdbserver -t STM32F769NIHx",
-            "program": "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf",
+            "program": "BUILD/debug/${workspaceRootFolderName}.elf",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${workspaceRoot}",
@@ -118,22 +118,6 @@
                 "programOutput": true,
                 "exceptions": true
             },
-        },
-        {
-            "name": "Python: Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "console": "integratedTerminal",
-            "args": [
-                //"compile", "--target", "NUCLEO_H7A3ZI_Q", "--toolchain", "GCC_ARM", "-v", ">", "c:\\temp\\buildlog3.txt"
-                //"compile", "--supported"
-                //"config", "--global", "GCC_ARM_PATH", "C:\\Program Files (x86)\\GNU Tools ARM Embedded\\9 2019-q4-major\\bin"
-                //"new", ".", "-v"
-                //"deploy", "-v"
-                //"--toolchain", "GCC_ARM", "--target", "NUCLEO_H7A3ZI_Q", "--source", ".", "--build", ".\\BUILD\\NUCLEO_H7A3ZI_Q\\GCC_ARM", "-v"
-                "crashlog.txt", "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.elf", "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.map"
-            ]
         }
     ]
 }
