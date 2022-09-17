@@ -1,4 +1,1 @@
-[submodule "lvgl"]
-	path = lvgl
-	url = https://github.com/lvgl/lvgl
-	shallow = true
+git rm
