@@ -84,7 +84,7 @@
             "command": "openocd",
             "args": [
                 "-s",
-                "{env:OpenOCD}/scripts",
+                "${env:OpenOCD}/scripts",
                 "-f",
                 "STM32F7x_STLink.cfg",
                 "-c program \"BUILD/debug/${workspaceRootFolderName}.elf\" verify reset exit"

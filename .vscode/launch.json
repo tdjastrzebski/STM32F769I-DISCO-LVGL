@@ -12,7 +12,7 @@
             "svdFile": "STM32F7x9.svd",
             "runToEntryPoint": "main",
             "device": "STM32F769NIHx",
-            "searchDir": ["${OpenOCD}/scripts"],
+            "searchDir": ["${env:OpenOCD}/scripts"],
             "configFiles": [
                 "/interface/stlink.cfg",
                 "/target/stm32f7x.cfg",
@@ -39,7 +39,7 @@
             "svdFile": "STM32F7x9.svd",
             "runToEntryPoint": "main",
             "device": "STM32F769NIHx",
-            "searchDir": ["${OpenOCD}/scripts"],
+            "searchDir": ["${env:OpenOCD}/scripts"],
             "configFiles": [
                 "/interface/jlink.cfg",
                 "/target/stm32f7x.cfg",
