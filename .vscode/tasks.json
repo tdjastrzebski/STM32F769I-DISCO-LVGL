@@ -35,7 +35,7 @@
                 //"--debug",
                 "--opt",
                 "write",
-                "'${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.bin'",
+                "'BUILD/debug/${workspaceRootFolderName}.bin'",
                 "0x08000000",
             ],
             "options": {
@@ -56,7 +56,7 @@
             "command": "pyocd",
             "args": [
                 "flash",
-                "${workspaceRoot}/BUILD/debug/${workspaceRootFolderName}.bin",
+                "BUILD/debug/${workspaceRootFolderName}.bin",
                 "--base-address",
                 "0x08000000",
                 "--target",
@@ -86,7 +86,7 @@
                 "-s",
                 "${env:OpenOCD}/scripts",
                 "-f",
-                "${workspaceRoot}/STM32F7x_STLink.cfg",
+                "STM32F7x_STLink.cfg",
                 "-c program \"BUILD/debug/${workspaceRootFolderName}.elf\" verify reset exit"
             ],
             "options": {
