@@ -16,7 +16,7 @@ Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO
 * `pyocd pack install STM32F769NIHx`
 ## OpenOCD
 * Download the latest version from https://github.com/xpack-dev-tools/openocd-xpack/releases
-or build yourself following [this guide](https://github.com/Marus/cortex-debug/wiki/How-to-build-current-OpenOCD-version-on-Windows)
+or build it yourself following [this guide](https://github.com/Marus/cortex-debug/wiki/How-to-build-current-OpenOCD-version-on-Windows)
 * Unzip it to `OpenOCD` folder in `C:\Program Files`
 * Set `OpenOCD` system variable to 'C:\Program Files\OpenOCD'
 * Add `%OpenOCD%\bin` to system PATH variable
