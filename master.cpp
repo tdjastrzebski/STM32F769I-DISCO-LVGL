@@ -172,7 +172,7 @@ void LogInfo(const char* format_msg, ...) {
 	int len = vsnprintf(textBuffer, sizeof(textBuffer), format_msg, args);
 	va_end(args);
 
-	if (HAL_OK != HAL_UART_Transmit(&huart1, (uint8_t*)textBuffer, len, 0xFFFFFFFF)) {
+	if (HAL_OK != HAL_UART_Transmit(&huart1, (uint8_t*)textBuffer, len, HAL_MAX_DELAY)) {
 		Error_Handler();
 	}
 }
