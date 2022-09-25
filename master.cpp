@@ -24,6 +24,7 @@ extern DMA2D_HandleTypeDef hdma2d;
 extern TIM_HandleTypeDef htim14;
 
 LV_FONT_DECLARE(lv_font_montserrat_48)
+LV_FONT_DECLARE(lv_font_montserrat_16)
 static lv_disp_drv_t _disp_drv;                                    // lvgl display driver
 ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a buffer of 1/10 screen size
 
@@ -60,7 +61,7 @@ extern "C" void PostInit(void) {
 	hdma2d.XferCpltCallback = FlushBufferComplete;
 	htim14.PeriodElapsedCallback = LvglRefresh;
 	// start LVGL timer 5ms
-	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt!
+	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt. Lower "Preemption Priority" (DMA2D) is served FIRST and uninterrupted.
 }
 
 extern "C" void MainLoop(void) {
@@ -73,15 +74,25 @@ extern "C" void MainLoop(void) {
 
 static void HelloWorld(void) {
 	// See: https://docs.lvgl.io/latest/en/html/widgets/label.html
-	static lv_style_t fontStyle;
-	lv_style_init(&fontStyle);
-	lv_style_set_text_font(&fontStyle, &lv_font_montserrat_48);
-	lv_style_set_text_color(&fontStyle, lv_color_black());
 	lv_obj_t* screen = lv_scr_act();
-	lv_obj_t* label = lv_label_create(screen);
-	lv_obj_add_style(label, &fontStyle, 0);
-	lv_label_set_text_static(label, "Hello World!");
-	lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+
+	static lv_style_t largeFontStyle;
+	lv_style_init(&largeFontStyle);
+	lv_style_set_text_font(&largeFontStyle, &lv_font_montserrat_48);
+	lv_style_set_text_color(&largeFontStyle, lv_color_black());
+	static lv_obj_t* largeLabel = lv_label_create(screen);
+	lv_obj_add_style(largeLabel, &largeFontStyle, 0);
+	lv_label_set_text_static(largeLabel, "Hello World!");
+	lv_obj_align(largeLabel, LV_ALIGN_CENTER, 0, 0);
+
+	static lv_style_t smallFontStyle;
+	lv_style_init(&smallFontStyle);
+	lv_style_set_text_font(&smallFontStyle, &lv_font_montserrat_16);
+	lv_style_set_text_color(&smallFontStyle, lv_color_make(0, 0, 255));
+	static lv_obj_t* smallLabel = lv_label_create(screen);
+	lv_obj_add_style(smallLabel, &smallFontStyle, 0);
+	lv_label_set_text_static(smallLabel, "press blue button to toggle demo");
+	lv_obj_align(smallLabel, LV_ALIGN_CENTER, 0, 40);
 }
 
 static void LvglInit(void) {
@@ -124,6 +135,10 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	HAL_DMA2D_Init(&hdma2d);
 	HAL_DMA2D_ConfigLayer(&hdma2d, 0);
 	HAL_DMA2D_Start_IT(&hdma2d, (uint32_t)buffer, destination, width, height);
+	// instead of starting DMA2D transfer in interrupt (IT) mode and waiting for completetion we can pool for transfer
+	// HAL_DMA2D_Start(&hdma2d, (uint32_t)buffer, destination, width, height);
+	// HAL_DMA2D_PollForTransfer(&hdma2d, 10);  // typical wait time < 1ms
+	// lv_disp_flush_ready(&_disp_drv);
 }
 
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d) {
@@ -163,10 +178,19 @@ void LogInfo(const char* format_msg, ...) {
 }
 
 extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+	// note: GPIO EXTI0 must have low priority (=high preemption priority) so it does not interrupt screen painting or DMA2D transfer
 	static uint8_t i = 0;
+	static uint32_t lastTimeCalled = 0;
+
+	// simple, but imperfect debouncer
+	if (HAL_GetTick() - lastTimeCalled < 100) {
+		lastTimeCalled = HAL_GetTick();
+		return;
+	}
+
+	lastTimeCalled = HAL_GetTick();
 
 	if (GPIO_Pin == B_USER_Pin) {
-		lv_obj_clean(lv_scr_act());
 		HAL_TIM_Base_Stop_IT(&htim14);
 		lv_deinit();
 		LvglInit();
