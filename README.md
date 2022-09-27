@@ -22,7 +22,7 @@ or build it yourself following [this guide](https://github.com/Marus/cortex-debu
 * Add `%OpenOCD%\bin` to system PATH variable
 > Note: xpm utility does not really support global installations (yet), hence I suggest the above approach.
 ## SVD file - MPU specific
-Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and place in the Software root folder.
+Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and place in the root folder.
 ## GNU Arm Embedded Toolchain
 * Required version: **arm-none-eabi** (bare-metal target) [10.3-2021.07](https://developer.arm.com/downloads/-/gnu-a)
 * Do NOT use latest versions 11.x and 12.x. Newer versions currently have known bugs which may impact build and/or debug process.
