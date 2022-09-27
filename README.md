@@ -1,6 +1,6 @@
 # STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo
 Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO board with [LVGL](https://github.com/lvgl/lvgl) embedded graphics library and no OS (bare-metal) and set up VS Code development environment including build and OCD step debugging.  
-> git clone --recurse-submodules https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL
+> git clone --recursive https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL
 
 ![hello world](HelloWorld.JPG)
 # VS Code Environment Setup
@@ -10,7 +10,7 @@ Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO
 * Git
 * VS Code
 ## pyOCD
-* `pip install pyocd --upgrade` On Windows install as admin, otherwise install is local and PATH settings is required.
+* `pip install pyocd --upgrade` On Windows install as admin, otherwise install is local and PATH setting is required.
 * `pyocd pack update`
 * `pyocd pack find stm32f769`
 * `pyocd pack install STM32F769NIHx`
