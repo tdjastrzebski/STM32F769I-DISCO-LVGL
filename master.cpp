@@ -17,7 +17,7 @@
 #define SCREEN_WIDTH OTM8009A_800X480_WIDTH
 #define SCREEN_HEIGHT OTM8009A_800X480_HEIGHT
 #define DRAW_BUFFER_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10)
-#define LCD_BPP 4  // bytes per pixel
+#define LCD_BPP (LV_COLOR_SIZE / 8)  // bytes per pixel
 
 extern UART_HandleTypeDef huart1;
 extern DMA2D_HandleTypeDef hdma2d;
