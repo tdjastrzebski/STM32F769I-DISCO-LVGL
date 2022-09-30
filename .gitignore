@@ -2,3 +2,4 @@
 /Debug
 /__pycache__
 .cortex-debug.*
+*.diff
