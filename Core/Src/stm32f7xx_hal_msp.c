@@ -404,9 +404,6 @@ void HAL_DSI_MspInit(DSI_HandleTypeDef* hdsi)
     GPIO_InitStruct.Alternate = GPIO_AF13_DSI;
     HAL_GPIO_Init(DSIHOST_TE_GPIO_Port, &GPIO_InitStruct);
 
-    /* DSI interrupt Init */
-    HAL_NVIC_SetPriority(DSI_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(DSI_IRQn);
   /* USER CODE BEGIN DSI_MspInit 1 */
 
   /* USER CODE END DSI_MspInit 1 */
@@ -435,8 +432,6 @@ void HAL_DSI_MspDeInit(DSI_HandleTypeDef* hdsi)
     */
     HAL_GPIO_DeInit(DSIHOST_TE_GPIO_Port, DSIHOST_TE_Pin);
 
-    /* DSI interrupt DeInit */
-    HAL_NVIC_DisableIRQ(DSI_IRQn);
   /* USER CODE BEGIN DSI_MspDeInit 1 */
 
   /* USER CODE END DSI_MspDeInit 1 */
@@ -775,9 +770,6 @@ void HAL_LTDC_MspInit(LTDC_HandleTypeDef* hltdc)
   /* USER CODE END LTDC_MspInit 0 */
     /* Peripheral clock enable */
     __HAL_RCC_LTDC_CLK_ENABLE();
-    /* LTDC interrupt Init */
-    HAL_NVIC_SetPriority(LTDC_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(LTDC_IRQn);
   /* USER CODE BEGIN LTDC_MspInit 1 */
 
   /* USER CODE END LTDC_MspInit 1 */
@@ -800,9 +792,6 @@ void HAL_LTDC_MspDeInit(LTDC_HandleTypeDef* hltdc)
   /* USER CODE END LTDC_MspDeInit 0 */
     /* Peripheral clock disable */
     __HAL_RCC_LTDC_CLK_DISABLE();
-
-    /* LTDC interrupt DeInit */
-    HAL_NVIC_DisableIRQ(LTDC_IRQn);
   /* USER CODE BEGIN LTDC_MspDeInit 1 */
 
   /* USER CODE END LTDC_MspDeInit 1 */
@@ -1772,9 +1761,6 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* hpcd)
     /* Peripheral clock enable */
     __HAL_RCC_USB_OTG_HS_CLK_ENABLE();
     __HAL_RCC_USB_OTG_HS_ULPI_CLK_ENABLE();
-    /* USB_OTG_HS interrupt Init */
-    HAL_NVIC_SetPriority(OTG_HS_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(OTG_HS_IRQn);
   /* USER CODE BEGIN USB_OTG_HS_MspInit 1 */
 
   /* USER CODE END USB_OTG_HS_MspInit 1 */
@@ -1824,8 +1810,6 @@ void HAL_PCD_MspDeInit(PCD_HandleTypeDef* hpcd)
 
     HAL_GPIO_DeInit(GPIOA, ULPI_CLK_Pin|ULPI_D0_Pin);
 
-    /* USB_OTG_HS interrupt DeInit */
-    HAL_NVIC_DisableIRQ(OTG_HS_IRQn);
   /* USER CODE BEGIN USB_OTG_HS_MspDeInit 1 */
 
   /* USER CODE END USB_OTG_HS_MspDeInit 1 */

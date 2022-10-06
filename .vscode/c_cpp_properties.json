@@ -19,6 +19,7 @@
       ],
       "defines": [
         "USE_HAL_DRIVER",
+        "STM32F7",
         "STM32F769xx",
         "DEBUG"
       ],

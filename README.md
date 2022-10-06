@@ -1,6 +1,6 @@
 # STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo
 Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO board with [LVGL](https://github.com/lvgl/lvgl) embedded graphics library and no OS (bare-metal) and set up VS Code development environment including build and OCD step debugging.  
-> git clone --recurse-submodules https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL
+> git clone --recursive https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL
 
 ![hello world](HelloWorld.JPG)
 # VS Code Environment Setup
@@ -10,25 +10,24 @@ Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO
 * Git
 * VS Code
 ## pyOCD
-* `pip install pyocd --upgrade` On Windows install as admin, otherwise install is local and PATH settings is required.
+* `pip install pyocd --upgrade` On Windows install as admin, otherwise install is local and PATH setting is required.
 * `pyocd pack update`
 * `pyocd pack find stm32f769`
 * `pyocd pack install STM32F769NIHx`
 ## OpenOCD
 * Download the latest version from https://github.com/xpack-dev-tools/openocd-xpack/releases
-or build yourself following [this guide](https://github.com/Marus/cortex-debug/wiki/How-to-build-current-OpenOCD-version-on-Windows)
+or build it yourself following [this guide](https://github.com/Marus/cortex-debug/wiki/How-to-build-current-OpenOCD-version-on-Windows)
 * Unzip it to `OpenOCD` folder in `C:\Program Files`
 * Set `OpenOCD` system variable to 'C:\Program Files\OpenOCD'
 * Add `%OpenOCD%\bin` to system PATH variable
 > Note: xpm utility does not really support global installations (yet), hence I suggest the above approach.
 ## SVD file - MPU specific
-Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and place in the Software root folder.
+Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and place in the root folder.
 ## GNU Arm Embedded Toolchain
-* required version: **arm-none-eabi** (bare-metal target)
-* Download from https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack
-* Set `MBED_GCC_ARM_PATH` env variable to `C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\11.2 2022.02\bin` (latest version Windows path).
+* Required version: **arm-none-eabi** (bare-metal target) [10.3-2021.07](https://developer.arm.com/downloads/-/gnu-a)
+* Do NOT use latest versions 11.x and 12.x. Newer versions currently have known bugs which may impact build and/or debug process.
+* Set `MBED_GCC_ARM_PATH` env variable to `C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\10.3 2021.07\bin`
 * Add `MBED_GCC_ARM_PATH` env variable to Windows `Path` env variable (`%MBED_GCC_ARM_PATH%`) - if not set by the installer.
-> Note: the most official build can be found [here](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/downloads) but I do not recommend using it. `arm-none-eabi-gdb` ver. 11.2 has a buggy dependency on unsupported and retired Python 2.7.
 ## Required NPM packages
 * `npm install -g cppbuild`
 * `npm install -g shx`

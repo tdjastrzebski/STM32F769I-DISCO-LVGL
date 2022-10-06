@@ -56,11 +56,8 @@
 
 /* External variables --------------------------------------------------------*/
 extern DMA2D_HandleTypeDef hdma2d;
-extern DSI_HandleTypeDef hdsi;
 extern CEC_HandleTypeDef hcec;
-extern LTDC_HandleTypeDef hltdc;
 extern TIM_HandleTypeDef htim14;
-extern PCD_HandleTypeDef hpcd_USB_OTG_HS;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -232,34 +229,6 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USB On The Go HS global interrupt.
-  */
-void OTG_HS_IRQHandler(void)
-{
-  /* USER CODE BEGIN OTG_HS_IRQn 0 */
-
-  /* USER CODE END OTG_HS_IRQn 0 */
-  HAL_PCD_IRQHandler(&hpcd_USB_OTG_HS);
-  /* USER CODE BEGIN OTG_HS_IRQn 1 */
-
-  /* USER CODE END OTG_HS_IRQn 1 */
-}
-
-/**
-  * @brief This function handles LTDC global interrupt.
-  */
-void LTDC_IRQHandler(void)
-{
-  /* USER CODE BEGIN LTDC_IRQn 0 */
-
-  /* USER CODE END LTDC_IRQn 0 */
-  HAL_LTDC_IRQHandler(&hltdc);
-  /* USER CODE BEGIN LTDC_IRQn 1 */
-
-  /* USER CODE END LTDC_IRQn 1 */
-}
-
-/**
   * @brief This function handles DMA2D global interrupt.
   */
 void DMA2D_IRQHandler(void)
@@ -285,20 +254,6 @@ void CEC_IRQHandler(void)
   /* USER CODE BEGIN CEC_IRQn 1 */
 
   /* USER CODE END CEC_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DSI global interrupt.
-  */
-void DSI_IRQHandler(void)
-{
-  /* USER CODE BEGIN DSI_IRQn 0 */
-
-  /* USER CODE END DSI_IRQn 0 */
-  HAL_DSI_IRQHandler(&hdsi);
-  /* USER CODE BEGIN DSI_IRQn 1 */
-
-  /* USER CODE END DSI_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */
