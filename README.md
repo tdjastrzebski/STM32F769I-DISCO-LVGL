@@ -1,6 +1,8 @@
 # STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo
 Content of this repo demonstrates how to set use LCD display on STM32F769I-DISCO board with [LVGL](https://github.com/lvgl/lvgl) embedded graphics library and no OS (bare-metal) and set up VS Code development environment including build and OCD step debugging.  
-> git clone --recursive https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL
+
+To clone this repo execute:  
+`git clone --recursive https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL`
 
 ![hello world](HelloWorld.JPG)
 # VS Code Environment Setup
@@ -49,13 +51,12 @@ Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and
 
 # References
 ## Discovery kit with STM32F769NI MCU docs
-* https://www.st.com/en/evaluation-tools/32f769idiscovery.html
-* https://www.st.com/en/evaluation-tools/32f769idiscovery.html#documentation
-* https://www.st.com/en/evaluation-tools/32f769idiscovery.html#cad-resources
+* [Discovery kit with STM32F769NI MCU](https://www.st.com/en/evaluation-tools/32f769idiscovery.html)
+* [Documentation](https://www.st.com/en/evaluation-tools/32f769idiscovery.html#documentation)
+* [Resources](https://www.st.com/en/evaluation-tools/32f769idiscovery.html#cad-resources)
 
 ## STM32F769NI MPU docs
-* https://www.st.com/en/microcontrollers-microprocessors/stm32f769ni.html
-* https://www.st.com/en/microcontrollers-microprocessors/stm32f769ni.html#documentation
+* [STM32F769NI MPU](https://www.st.com/en/microcontrollers-microprocessors/stm32f769ni.html)
 * [DS11532](https://www.st.com/resource/en/datasheet/stm32f769ni.pdf)
 * [RM0410](https://www.st.com/resource/en/reference_manual/rm0410-stm32f76xxx-and-stm32f77xxx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
 
