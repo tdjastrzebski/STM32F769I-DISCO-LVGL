@@ -1,5 +1,5 @@
 # STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo
-Content of this repo demonstrates how to use LCD display on STM32F769I-DISCO board with [LVGL](https://github.com/lvgl/lvgl) embedded graphics library and no OS (bare-metal) and set up VS Code development environment including build and OCD step debugging.  
+Content of this repo demonstrates how to use LCD display on STM32F769I-DISCO board with [LVGL](https://github.com/lvgl/lvgl) embedded graphics library supporting touch without OS (bare-metal) and hot to set up VS Code development environment including build and OCD step debugging.  
 
 To clone this repo execute:  
 `git clone --recursive https://github.com/tdjastrzebski/STM32F769I-DISCO-LVGL`
