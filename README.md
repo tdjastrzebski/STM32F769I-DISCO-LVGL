@@ -58,8 +58,8 @@ Download from https://github.com/posborne/cmsis-svd/tree/master/data/STMicro and
 
 ## STM32F769NI MPU docs
 * [STM32F769NI MPU](https://www.st.com/en/microcontrollers-microprocessors/stm32f769ni.html)
-* [DS11532](https://www.st.com/resource/en/datasheet/stm32f769ni.pdf)
-* [RM0410](https://www.st.com/resource/en/reference_manual/rm0410-stm32f76xxx-and-stm32f77xxx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
-
+* [DS11532 Arm® Cortex®-M7 32b MCU+FPU, 462DMIPS, up to 2MB Flash/ 512+16+4KB RAM, USB OTG HS/FS, 28 com IF, LCD, DSI datasheet](https://www.st.com/resource/en/datasheet/stm32f769ni.pdf)
+* [RM0410 STM32F76xxx and STM32F77xxx advanced Arm®-based 32-bit MCUs reference manual](https://www.st.com/resource/en/reference_manual/rm0410-stm32f76xxx-and-stm32f77xxx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf)
+* [PM0253 STM32F7 Series and STM32H7 Series Cortex®-M7 processor programming manual](https://www.st.com/resource/en/programming_manual/pm0253-stm32f7-series-and-stm32h7-series-cortexm7-processor-programming-manual-stmicroelectronics.pdf)
 ## How to add a BSP (Board Support Packages) to an STM32CubeIDE project?
 https://st.force.com/community/s/article/how-to-add-a-bsp-to-an-stm32cubeide-project
