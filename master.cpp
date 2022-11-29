@@ -133,7 +133,7 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	hdma2d.Init.ColorMode = DMA2D_OUTPUT_ARGB8888;
 	hdma2d.Instance = DMA2D;
 	HAL_DMA2D_Init(&hdma2d);
-	HAL_DMA2D_ConfigLayer(&hdma2d, 0);
+	HAL_DMA2D_ConfigLayer(&hdma2d, DMA2D_FOREGROUND_LAYER);
 	HAL_DMA2D_Start_IT(&hdma2d, (uint32_t)buffer, destination, width, height);
 	// instead of starting DMA2D transfer in interrupt (IT) mode and waiting for completetion we can pool for transfer
 	// HAL_DMA2D_Start(&hdma2d, (uint32_t)buffer, destination, width, height);
