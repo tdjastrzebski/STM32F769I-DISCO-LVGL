@@ -31,7 +31,7 @@
 					"params": {
 						"flags": "${cpu} ${fpu} --specs=nano.specs -mthumb -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF[${outputFile}] -MT[${outputFile}]"
 					},
-					"command": "arm-none-eabi-gcc -std=gnu11 -c ${flags} ${buildTypeFlags} (-I[$${includePath}]) (-D$${defines}) (-include [$${forcedInclude}]) [${filePath}] -o [${outputFile}] ${extraSearchPaths}"
+					"command": "arm-none-eabi-gcc -std=gnu17 -c ${flags} ${buildTypeFlags} (-I[$${includePath}]) (-D$${defines}) (-include [$${forcedInclude}]) [${filePath}] -o [${outputFile}] ${extraSearchPaths}"
 				},
 				{
 					"name": "C++ Compile",

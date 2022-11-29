@@ -28,7 +28,6 @@ LV_FONT_DECLARE(lv_font_montserrat_16)
 static lv_disp_drv_t _disp_drv;                                    // lvgl display driver
 ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a buffer of 1/10 screen size
 
-static void LogInfo(const char* format_msg, ...);
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
 static void LvglRefresh(TIM_HandleTypeDef* htim);
@@ -55,7 +54,7 @@ extern "C" void PostInit(void) {
 	// lv_demo_stress();
 	// lv_demo_music();
 
-	LogInfo("Hello World!\n");
+	printf("Hello World!\n");
 
 	// set interrupt handlers
 	hdma2d.XferCpltCallback = FlushBufferComplete;
@@ -122,7 +121,7 @@ static void LvglRefresh(TIM_HandleTypeDef* htim) {
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* buffer) {
 	uint32_t width = lv_area_get_width(area);
 	uint32_t height = lv_area_get_height(area);
-	uint32_t bufferLength = width * height * LCD_BPP;
+	uint32_t bufferLength = width * height * sizeof(lv_color_t);
 	uint16_t x = area->x1;
 	uint16_t y = area->y1;
 	// copy buffer using DMA2D without Pixel Format Conversion (PFC) or Blending
@@ -162,18 +161,6 @@ static void TouchapadRead(lv_indev_drv_t* drv, lv_indev_data_t* data) {
 		data->point.x = last_x;
 		data->point.y = last_y;
 		data->state = LV_INDEV_STATE_REL;
-	}
-}
-
-void LogInfo(const char* format_msg, ...) {
-	static char textBuffer[64];
-	va_list args;
-	va_start(args, format_msg);
-	int len = vsnprintf(textBuffer, sizeof(textBuffer), format_msg, args);
-	va_end(args);
-
-	if (HAL_OK != HAL_UART_Transmit(&huart1, (uint8_t*)textBuffer, len, HAL_MAX_DELAY)) {
-		Error_Handler();
 	}
 }
 
