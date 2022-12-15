@@ -119,8 +119,8 @@ static void LvglRefresh(TIM_HandleTypeDef* htim) {
 }
 
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* buffer) {
-	uint32_t width = lv_area_get_width(area);
-	uint32_t height = lv_area_get_height(area);
+	uint16_t width = lv_area_get_width(area);
+	uint16_t height = lv_area_get_height(area);
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
 	uint16_t x = area->x1;
 	uint16_t y = area->y1;
@@ -129,7 +129,7 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
 	hdma2d.Init.Mode = DMA2D_M2M;
 	hdma2d.Init.OutputOffset = (SCREEN_WIDTH - width);
-	hdma2d.Init.ColorMode = DMA2D_OUTPUT_ARGB8888;
+	hdma2d.Init.ColorMode = DMA2D_INPUT_ARGB8888;
 	hdma2d.Instance = DMA2D;
 	HAL_DMA2D_Init(&hdma2d);
 	HAL_DMA2D_ConfigLayer(&hdma2d, DMA2D_FOREGROUND_LAYER);
