@@ -127,6 +127,7 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	// copy buffer using DMA2D without Pixel Format Conversion (PFC) or Blending
 	uint32_t destination = LCD_FB_START_ADDRESS + LCD_BPP * (y * SCREEN_WIDTH + x);
 	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+	// configure foreground layer
 	hdma2d.Init.Mode = DMA2D_M2M;
 	hdma2d.Init.OutputOffset = (SCREEN_WIDTH - width);
 	hdma2d.Init.ColorMode = DMA2D_INPUT_ARGB8888;
