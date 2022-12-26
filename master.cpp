@@ -119,26 +119,26 @@ static void LvglRefresh(TIM_HandleTypeDef* htim) {
 }
 
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* buffer) {
-	uint16_t width = lv_area_get_width(area);
-	uint16_t height = lv_area_get_height(area);
+	lv_coord_t width = lv_area_get_width(area);
+	lv_coord_t height = lv_area_get_height(area);
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
-	uint16_t x = area->x1;
-	uint16_t y = area->y1;
-	// copy buffer using DMA2D without Pixel Format Conversion (PFC) or Blending
-	uint32_t destination = LCD_FB_START_ADDRESS + LCD_BPP * (y * SCREEN_WIDTH + x);
+	//while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
 	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
-	// configure foreground layer
-	hdma2d.Init.Mode = DMA2D_M2M;
-	hdma2d.Init.OutputOffset = (SCREEN_WIDTH - width);
-	hdma2d.Init.ColorMode = DMA2D_INPUT_ARGB8888;
-	hdma2d.Instance = DMA2D;
-	HAL_DMA2D_Init(&hdma2d);
-	HAL_DMA2D_ConfigLayer(&hdma2d, DMA2D_FOREGROUND_LAYER);
-	HAL_DMA2D_Start_IT(&hdma2d, (uint32_t)buffer, destination, width, height);
-	// instead of starting DMA2D transfer in interrupt (IT) mode and waiting for completetion we can pool for transfer
-	// HAL_DMA2D_Start(&hdma2d, (uint32_t)buffer, destination, width, height);
-	// HAL_DMA2D_PollForTransfer(&hdma2d, 10);  // typical wait time < 1ms
-	// lv_disp_flush_ready(&_disp_drv);
+	// Note: CR mode can be set to 0 (no PFC) if FG and OUT color formats are the same (FGPFCCR=OPFCCR)
+	DMA2D->CR = 0x1U << DMA2D_CR_MODE_Pos; // Memory-to-memory with PFC (FG fetch only with FG PFC active)
+	DMA2D->FGPFCCR = DMA2D_INPUT_ARGB8888;
+	DMA2D->FGMAR = (uint32_t)buffer;
+	DMA2D->FGOR = 0;
+	DMA2D->OPFCCR = DMA2D_OUTPUT_ARGB8888;
+	//DMA2D->OPFCCR |= (0x1U << DMA2D_OPFCCR_RBS_Pos); // emulate R/B color swap
+	DMA2D->OMAR = LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1);
+	DMA2D->OOR = SCREEN_WIDTH - width;
+	DMA2D->NLR = (width << DMA2D_NLR_PL_Pos) | (height << DMA2D_NLR_NL_Pos);
+	DMA2D->IFCR = 0x3FU; // trigger ISR flags reset
+	DMA2D->CR |= DMA2D_CR_TCIE; // transfer complete interrupt enable
+    DMA2D->CR |= DMA2D_CR_START;
+	//while((DMA2D->CR & DMA2D_CR_START) != 0U);
+	//lv_disp_flush_ready(&_disp_drv);
 }
 
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d) {
