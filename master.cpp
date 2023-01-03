@@ -124,8 +124,8 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
 	//while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
 	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
-	// Note: CR mode can be set to 0 (no PFC) if FG and OUT color formats are the same (FGPFCCR=OPFCCR)
-	DMA2D->CR = 0x1U << DMA2D_CR_MODE_Pos; // Memory-to-memory with PFC (FG fetch only with FG PFC active)
+	// Note: CR mode can be set to 1 (PFC) if FG and OUT color formats are not the same (FGPFCCR!=OPFCCR)
+	DMA2D->CR = 0x0U << DMA2D_CR_MODE_Pos; // Memory-to-memory (FG fetch only)
 	DMA2D->FGPFCCR = DMA2D_INPUT_ARGB8888;
 	DMA2D->FGMAR = (uint32_t)buffer;
 	DMA2D->FGOR = 0;
