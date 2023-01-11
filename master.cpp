@@ -17,7 +17,8 @@
 #define SCREEN_WIDTH OTM8009A_800X480_WIDTH
 #define SCREEN_HEIGHT OTM8009A_800X480_HEIGHT
 #define DRAW_BUFFER_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10)
-#define LCD_BPP (32/8) // bytes per LCD pixel since ColorMode = DMA2D_OUTPUT_ARGB8888
+#define LCD_BPP (32 / 8)                             // bytes per LCD pixel since ColorMode = DMA2D_OUTPUT_ARGB8888
+#define AL(x, n) (x % n == 0 ? x : x + n - (x % n))  // align length
 
 extern UART_HandleTypeDef huart1;
 extern DMA2D_HandleTypeDef hdma2d;
@@ -25,8 +26,8 @@ extern TIM_HandleTypeDef htim14;
 
 LV_FONT_DECLARE(lv_font_montserrat_48)
 LV_FONT_DECLARE(lv_font_montserrat_16)
-static lv_disp_drv_t _disp_drv;                                    // lvgl display driver
-ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a buffer of 1/10 screen size
+static lv_disp_drv_t _disp_drv;                                                                  // lvgl display driver
+ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[AL(DRAW_BUFFER_SIZE, 32U / sizeof(lv_color_t))]);  // declare a buffer of 1/10 screen size
 
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
@@ -122,23 +123,23 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	lv_coord_t width = lv_area_get_width(area);
 	lv_coord_t height = lv_area_get_height(area);
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
-	//while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
-	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
-	// Note: CR mode can be set to 1 (PFC) if FG and OUT color formats are not the same (FGPFCCR!=OPFCCR)
-	DMA2D->CR = 0x0U << DMA2D_CR_MODE_Pos; // Memory-to-memory (FG fetch only)
+	// while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
+	// SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+	//  Note: CR mode can be set to 1 (PFC) if FG and OUT color formats are not the same (FGPFCCR!=OPFCCR)
+	DMA2D->CR = 0x0U << DMA2D_CR_MODE_Pos;  // Memory-to-memory (FG fetch only)
 	DMA2D->FGPFCCR = DMA2D_INPUT_ARGB8888;
 	DMA2D->FGMAR = (uint32_t)buffer;
 	DMA2D->FGOR = 0;
 	DMA2D->OPFCCR = DMA2D_OUTPUT_ARGB8888;
-	//DMA2D->OPFCCR |= (0x1U << DMA2D_OPFCCR_RBS_Pos); // emulate R/B color swap
+	// DMA2D->OPFCCR |= (0x1U << DMA2D_OPFCCR_RBS_Pos); // emulate R/B color swap
 	DMA2D->OMAR = LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1);
 	DMA2D->OOR = SCREEN_WIDTH - width;
 	DMA2D->NLR = (width << DMA2D_NLR_PL_Pos) | (height << DMA2D_NLR_NL_Pos);
-	DMA2D->IFCR = 0x3FU; // trigger ISR flags reset
-	DMA2D->CR |= DMA2D_CR_TCIE; // transfer complete interrupt enable
-    DMA2D->CR |= DMA2D_CR_START;
-	//while((DMA2D->CR & DMA2D_CR_START) != 0U);
-	//lv_disp_flush_ready(&_disp_drv);
+	DMA2D->IFCR = 0x3FU;         // trigger ISR flags reset
+	DMA2D->CR |= DMA2D_CR_TCIE;  // transfer complete interrupt enable
+	DMA2D->CR |= DMA2D_CR_START;
+	// while((DMA2D->CR & DMA2D_CR_START) != 0U);
+	// lv_disp_flush_ready(&_disp_drv);
 }
 
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d) {
