@@ -122,21 +122,35 @@ static void LvglRefresh(TIM_HandleTypeDef* htim) {
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* buffer) {
 	lv_coord_t width = lv_area_get_width(area);
 	lv_coord_t height = lv_area_get_height(area);
+
+#if !(LV_USE_GPU_STM32_DMA2D) || LV_COLOR_DEPTH == 16
+	// Not needed if dma2d is used - dma2d does not use L1 cache so cache does not need to be flushed.
+	// In 16B color mode is mixed (dma2d/non-dma2d) mode, hence buffer must be flushed
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
+	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+#endif
+
 	// while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
-	// SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
-	//  Note: CR mode can be set to 1 (PFC) if FG and OUT color formats are not the same (FGPFCCR!=OPFCCR)
+
+#if LV_COLOR_DEPTH == 16
+	DMA2D->CR = 0x1U << DMA2D_CR_MODE_Pos;  // Memory-to-memory with PFC (FG fetch only with FG PFC active)
+	DMA2D->FGPFCCR = DMA2D_INPUT_RGB565;
+#elif LV_COLOR_DEPTH == 32
 	DMA2D->CR = 0x0U << DMA2D_CR_MODE_Pos;  // Memory-to-memory (FG fetch only)
 	DMA2D->FGPFCCR = DMA2D_INPUT_ARGB8888;
+#else
+#error "Only LV_COLOR_DEPTH 16 and 32 are supported"
+#endif
 	DMA2D->FGMAR = (uint32_t)buffer;
 	DMA2D->FGOR = 0;
+
 	DMA2D->OPFCCR = DMA2D_OUTPUT_ARGB8888;
 	// DMA2D->OPFCCR |= (0x1U << DMA2D_OPFCCR_RBS_Pos); // emulate R/B color swap
 	DMA2D->OMAR = LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1);
 	DMA2D->OOR = SCREEN_WIDTH - width;
 	DMA2D->NLR = (width << DMA2D_NLR_PL_Pos) | (height << DMA2D_NLR_NL_Pos);
 	DMA2D->IFCR = 0x3FU;         // trigger ISR flags reset
-	DMA2D->CR |= DMA2D_CR_TCIE;  // transfer complete interrupt enable
+	DMA2D->CR |= DMA2D_CR_TCIE;  // enable transfer complete interrupt
 	DMA2D->CR |= DMA2D_CR_START;
 	// while((DMA2D->CR & DMA2D_CR_START) != 0U);
 	// lv_disp_flush_ready(&_disp_drv);
