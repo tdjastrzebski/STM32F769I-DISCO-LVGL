@@ -109,7 +109,7 @@ PCD_HandleTypeDef hpcd_USB_OTG_HS;
 
 SDRAM_HandleTypeDef hsdram1;
 
-uint8_t cec_receive_buffer[16];
+   uint8_t cec_receive_buffer[16];
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
@@ -1146,7 +1146,7 @@ static void MX_SDMMC2_SD_Init(void)
   hsd2.Init.ClockEdge = SDMMC_CLOCK_EDGE_RISING;
   hsd2.Init.ClockBypass = SDMMC_CLOCK_BYPASS_DISABLE;
   hsd2.Init.ClockPowerSave = SDMMC_CLOCK_POWER_SAVE_DISABLE;
-  hsd2.Init.BusWide = SDMMC_BUS_WIDE_1B;
+  hsd2.Init.BusWide = SDMMC_BUS_WIDE_4B;
   hsd2.Init.HardwareFlowControl = SDMMC_HARDWARE_FLOW_CONTROL_DISABLE;
   hsd2.Init.ClockDiv = 0;
   if (HAL_SD_Init(&hsd2) != HAL_OK)
@@ -1487,7 +1487,7 @@ static void MX_TIM14_Init(void)
   htim14.Instance = TIM14;
   htim14.Init.Prescaler = (TIMERS_CLOCK_FREQ_APB1/10000)-1;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim14.Init.Period = 50-1;
+  htim14.Init.Period = (5*10)-1;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
