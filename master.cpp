@@ -131,7 +131,7 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 	// Not needed if dma2d is used - dma2d does not use L1 cache so cache does not need to be flushed.
 	// In 16B color mode is mixed (dma2d/non-dma2d) mode, hence buffer must be flushed
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
-	// SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
 #endif
 
 	// while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
@@ -249,13 +249,13 @@ static bool MpuRamConfig(uint32_t address, uint32_t size) {
 	mpuInitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
 
 	HAL_MPU_Disable();
-
+	
 	while (size > 0) {
 		if (size >= regionSize) {
 			if (mpuInitStruct.Number > 7) {
-				return false;  // too many regions used
+				return false;  // all the available regions are already used
 			} else if (regionSize < 32) {
-				return false;  // size too small, probably size was not 32B aligned
+				return false;  // required region size is smaller than 32B, probably size was not 32B aligned
 			}
 			mpuInitStruct.BaseAddress = address;
 			mpuInitStruct.Size = sizeCode;
@@ -269,7 +269,7 @@ static bool MpuRamConfig(uint32_t address, uint32_t size) {
 	}
 
 	if (size != 0) {
-		return false;  // it did not work, probably size was not 32B aligned
+		return false;  // not entire memory region was configured, probably size was not 32B aligned
 	}
 
 	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
