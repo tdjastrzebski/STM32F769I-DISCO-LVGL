@@ -24,6 +24,7 @@
 
 extern UART_HandleTypeDef huart1;
 extern DMA2D_HandleTypeDef hdma2d;
+extern TIM_HandleTypeDef htim13;
 extern TIM_HandleTypeDef htim14;
 
 LV_FONT_DECLARE(lv_font_montserrat_48)
@@ -33,7 +34,8 @@ ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE_ALIGNED]);  // de
 
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
-static void LvglRefresh(TIM_HandleTypeDef* htim);
+static void LvglTick(TIM_HandleTypeDef* htim);
+static void LvglTask(TIM_HandleTypeDef* htim);
 static void HelloWorld(void);
 static void LvglInit(void);
 static void TouchapadRead(lv_indev_drv_t* drv, lv_indev_data_t* data);
@@ -63,9 +65,11 @@ extern "C" void PostInit(void) {
 
 	// set interrupt handlers
 	hdma2d.XferCpltCallback = FlushBufferComplete;
-	htim14.PeriodElapsedCallback = LvglRefresh;
+	htim13.PeriodElapsedCallback = LvglTick;
+	htim14.PeriodElapsedCallback = LvglTask;
 	// start LVGL timer 5ms
-	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt. Lower "Preemption Priority" (DMA2D) is served FIRST and uninterrupted.
+	HAL_TIM_Base_Start_IT(&htim13);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt. Lower "Preemption Priority" (DMA2D) is served FIRST and uninterrupted.
+	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than htim13
 }
 
 extern "C" void MainLoop(void) {
@@ -118,8 +122,11 @@ static void LvglInit(void) {
 	lv_indev_drv_register(&indev_drv);
 }
 
-static void LvglRefresh(TIM_HandleTypeDef* htim) {
+static void LvglTick(TIM_HandleTypeDef* htim) {
 	lv_tick_inc(5);
+}
+
+static void LvglTask(TIM_HandleTypeDef* htim) {
 	lv_task_handler();
 }
 
@@ -198,6 +205,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	lastTimeCalled = HAL_GetTick();
 
 	if (GPIO_Pin == B_USER_Pin) {
+		HAL_TIM_Base_Stop_IT(&htim13);
 		HAL_TIM_Base_Stop_IT(&htim14);
 		lv_deinit();
 		LvglInit();
@@ -205,27 +213,24 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		++i %= 5;
 
 		switch (i) {
-		case 0: {
+		case 0:
 			HelloWorld();
 			break;
-		}
-		case 1: {
+		case 1:
 			lv_demo_widgets();
 			break;
-		}
-		case 2: {
+		case 2:
 			lv_demo_benchmark();
 			break;
-		}
-		case 3: {
+		case 3:
 			lv_demo_stress();
 			break;
-		}
-		case 4: {
+		case 4:
 			lv_demo_music();
 			break;
 		}
-		}
+
+		HAL_TIM_Base_Start_IT(&htim13);
 		HAL_TIM_Base_Start_IT(&htim14);
 	}
 }
@@ -249,7 +254,7 @@ static bool MpuRamConfig(uint32_t address, uint32_t size) {
 	mpuInitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
 
 	HAL_MPU_Disable();
-	
+
 	while (size > 0) {
 		if (size >= regionSize) {
 			if (mpuInitStruct.Number > 7) {
