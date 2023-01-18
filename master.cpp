@@ -13,6 +13,7 @@
 #include "stm32f769i_discovery_lcd.h"
 #include "stm32f769i_discovery_ts.h"
 #include "stm32f7xx_hal.h"
+#include "ui.h"
 
 #define SCREEN_WIDTH OTM8009A_800X480_WIDTH
 #define SCREEN_HEIGHT OTM8009A_800X480_HEIGHT
@@ -27,8 +28,6 @@ extern DMA2D_HandleTypeDef hdma2d;
 extern TIM_HandleTypeDef htim13;
 extern TIM_HandleTypeDef htim14;
 
-LV_FONT_DECLARE(lv_font_montserrat_48)
-LV_FONT_DECLARE(lv_font_montserrat_16)
 static lv_disp_drv_t _disp_drv;                                            // lvgl display driver
 ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE_ALIGNED]);  // declare a buffer of 1/10 screen size
 
@@ -36,7 +35,6 @@ static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
 static void LvglTick(TIM_HandleTypeDef* htim);
 static void LvglTask(TIM_HandleTypeDef* htim);
-static void HelloWorld(void);
 static void LvglInit(void);
 static void TouchapadRead(lv_indev_drv_t* drv, lv_indev_data_t* data);
 static bool MpuRamConfig(uint32_t address, uint32_t size);
@@ -52,14 +50,10 @@ extern "C" void PostInit(void) {
 	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
 	BSP_TS_Init(800, 472);
-	MpuRamConfig((uint32_t)_lvDrawBuffer, DRAW_BUFFER_SIZE_ALIGNED);
+	//MpuRamConfig((uint32_t)_lvDrawBuffer, DRAW_BUFFER_SIZE_ALIGNED);
 
 	LvglInit();
-	HelloWorld();
-	// lv_demo_widgets();
-	// lv_demo_benchmark();
-	// lv_demo_stress();
-	// lv_demo_music();
+	ui_init();
 
 	printf("Hello World!\n");
 
@@ -78,29 +72,6 @@ extern "C" void MainLoop(void) {
 	HAL_GPIO_WritePin(LD_USER2_GPIO_Port, LD_USER2_Pin, (pattern >> shift) & 0x1 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 	++shift %= 32;
 	HAL_Delay(100);
-}
-
-static void HelloWorld(void) {
-	// See: https://docs.lvgl.io/latest/en/html/widgets/label.html
-	lv_obj_t* screen = lv_scr_act();
-
-	static lv_style_t largeFontStyle;
-	lv_style_init(&largeFontStyle);
-	lv_style_set_text_font(&largeFontStyle, &lv_font_montserrat_48);
-	lv_style_set_text_color(&largeFontStyle, lv_color_black());
-	static lv_obj_t* largeLabel = lv_label_create(screen);
-	lv_obj_add_style(largeLabel, &largeFontStyle, 0);
-	lv_label_set_text_static(largeLabel, "Hello World!");
-	lv_obj_align(largeLabel, LV_ALIGN_CENTER, 0, 0);
-
-	static lv_style_t smallFontStyle;
-	lv_style_init(&smallFontStyle);
-	lv_style_set_text_font(&smallFontStyle, &lv_font_montserrat_16);
-	lv_style_set_text_color(&smallFontStyle, lv_color_make(0, 0, 255));
-	static lv_obj_t* smallLabel = lv_label_create(screen);
-	lv_obj_add_style(smallLabel, &smallFontStyle, 0);
-	lv_label_set_text_static(smallLabel, "press blue button to toggle demo");
-	lv_obj_align(smallLabel, LV_ALIGN_CENTER, 0, 40);
 }
 
 static void LvglInit(void) {
@@ -193,46 +164,7 @@ static void TouchapadRead(lv_indev_drv_t* drv, lv_indev_data_t* data) {
 
 extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	// note: GPIO EXTI0 must have low priority (=high preemption priority) so it does not interrupt screen painting or DMA2D transfer
-	static uint8_t i = 0;
-	static uint32_t lastTimeCalled = 0;
 
-	// simple, but imperfect debouncer
-	if (HAL_GetTick() - lastTimeCalled < 100) {
-		lastTimeCalled = HAL_GetTick();
-		return;
-	}
-
-	lastTimeCalled = HAL_GetTick();
-
-	if (GPIO_Pin == B_USER_Pin) {
-		HAL_TIM_Base_Stop_IT(&htim13);
-		HAL_TIM_Base_Stop_IT(&htim14);
-		lv_deinit();
-		LvglInit();
-
-		++i %= 5;
-
-		switch (i) {
-		case 0:
-			HelloWorld();
-			break;
-		case 1:
-			lv_demo_widgets();
-			break;
-		case 2:
-			lv_demo_benchmark();
-			break;
-		case 3:
-			lv_demo_stress();
-			break;
-		case 4:
-			lv_demo_music();
-			break;
-		}
-
-		HAL_TIM_Base_Start_IT(&htim13);
-		HAL_TIM_Base_Start_IT(&htim14);
-	}
 }
 
 static bool MpuRamConfig(uint32_t address, uint32_t size) {
