@@ -216,13 +216,16 @@ static bool MpuRamConfig(uint32_t address, uint32_t size) {
 	// FMC_Bank1->BTCR[0] = 0x000030D2;
 }
 
-/* FlushBufferStart() without using DMA2D
+//FlushBufferStart() //without using DMA2D
+/*
 static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* buffer) {
     int32_t srcLineSize = LCD_BPP * (area->x2 - area->x1 + 1);
     int32_t dstLineSize = LCD_BPP * SCREEN_WIDTH;
     char* src = (char*)buffer;
     char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
 #if LV_USE_GPU_STM32_DMA2D
+	lv_coord_t width = lv_area_get_width(area);
+	lv_coord_t height = lv_area_get_height(area);
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
 	SCB_InvalidateDCache_by_Addr((uint32_t*)buffer, bufferLength);  // invalidate cache before reading memory after dma2d transfer
 #endif
