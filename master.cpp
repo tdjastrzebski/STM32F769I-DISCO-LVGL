@@ -222,6 +222,10 @@ static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_colo
     int32_t dstLineSize = LCD_BPP * SCREEN_WIDTH;
     char* src = (char*)buffer;
     char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
+#if LV_USE_GPU_STM32_DMA2D
+	uint32_t bufferLength = width * height * sizeof(lv_color_t);
+	SCB_InvalidateDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+#endif
 
     for (int32_t y = area->y1; y < area->y2; y++) {
         // copy buffer to display line by line
@@ -230,8 +234,9 @@ static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_colo
         dst += dstLineSize;
     }
     memcpy(dst, src, srcLineSize);  // copy the last line
+
     SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, SCREEN_WIDTH * SCREEN_HEIGHT * LCD_BPP);
 
-    if (disp != NULL) lv_disp_flush_ready(disp);  // Indicate you are ready with the flushing
+    if (disp != NULL) lv_disp_flush_ready(disp);  // notify LVGL flushing is done
 }
 */
