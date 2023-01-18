@@ -224,7 +224,7 @@ static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_colo
     char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
 #if LV_USE_GPU_STM32_DMA2D
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
-	SCB_InvalidateDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
+	SCB_InvalidateDCache_by_Addr((uint32_t*)buffer, bufferLength);  // invalidate cache before reading memory after dma2d transfer
 #endif
 
     for (int32_t y = area->y1; y < area->y2; y++) {
