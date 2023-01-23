@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------------
- *  Copyright (c) 2022 Tomasz Jastrzębski. All rights reserved.
+ *  Copyright (c) 2021-2022 Tomasz Jastrzębski. All rights reserved.
  *  Licensed under the GPL 3.0 License. See LICENSE file in the project root for license information.
  *-------------------------------------------------------------------------------------------------*/
 #include "master.h"
@@ -17,23 +17,29 @@
 #define SCREEN_WIDTH OTM8009A_800X480_WIDTH
 #define SCREEN_HEIGHT OTM8009A_800X480_HEIGHT
 #define DRAW_BUFFER_SIZE (SCREEN_WIDTH * SCREEN_HEIGHT / 10)
-#define LCD_BPP (32/8) // bytes per LCD pixel since ColorMode = DMA2D_OUTPUT_ARGB8888
+#define LCD_BPP (32 / 8)                             // bytes per LCD pixel since ColorMode = DMA2D_OUTPUT_ARGB8888
+#define AL(x, n) (x % n == 0 ? x : x + n - (x % n))  // align length
+#define CACHE_ROW_SIZE 32U
+#define DRAW_BUFFER_SIZE_ALIGNED AL(DRAW_BUFFER_SIZE, CACHE_ROW_SIZE / sizeof(lv_color_t))
 
 extern UART_HandleTypeDef huart1;
 extern DMA2D_HandleTypeDef hdma2d;
+extern TIM_HandleTypeDef htim13;
 extern TIM_HandleTypeDef htim14;
 
 LV_FONT_DECLARE(lv_font_montserrat_48)
 LV_FONT_DECLARE(lv_font_montserrat_16)
-static lv_disp_drv_t _disp_drv;                                    // lvgl display driver
-ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE]);  // declare a buffer of 1/10 screen size
+static lv_disp_drv_t _disp_drv;                                            // lvgl display driver
+ALIGN_32BYTES(static lv_color_t _lvDrawBuffer[DRAW_BUFFER_SIZE_ALIGNED]);  // declare a buffer of 1/10 screen size
 
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* color_p);
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d);
-static void LvglRefresh(TIM_HandleTypeDef* htim);
+static void LvglTick(TIM_HandleTypeDef* htim);
+static void LvglTask(TIM_HandleTypeDef* htim);
 static void HelloWorld(void);
 static void LvglInit(void);
 static void TouchapadRead(lv_indev_drv_t* drv, lv_indev_data_t* data);
+static bool MpuRamConfig(uint32_t address, uint32_t size);
 
 extern "C" void PreInit() {}
 
@@ -46,6 +52,7 @@ extern "C" void PostInit(void) {
 	BSP_LCD_LayerDefaultInit(0, LCD_FB_START_ADDRESS);
 	BSP_LCD_Clear(LCD_COLOR_BLACK);
 	BSP_TS_Init(800, 472);
+	MpuRamConfig((uint32_t)_lvDrawBuffer, DRAW_BUFFER_SIZE_ALIGNED);
 
 	LvglInit();
 	HelloWorld();
@@ -58,9 +65,11 @@ extern "C" void PostInit(void) {
 
 	// set interrupt handlers
 	hdma2d.XferCpltCallback = FlushBufferComplete;
-	htim14.PeriodElapsedCallback = LvglRefresh;
+	htim13.PeriodElapsedCallback = LvglTick;
+	htim14.PeriodElapsedCallback = LvglTask;
 	// start LVGL timer 5ms
-	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt. Lower "Preemption Priority" (DMA2D) is served FIRST and uninterrupted.
+	HAL_TIM_Base_Start_IT(&htim13);  // Note: this interrupt must have "Preemption Priority" higher than DMA2D interrupt. Lower "Preemption Priority" (DMA2D) is served FIRST and uninterrupted.
+	HAL_TIM_Base_Start_IT(&htim14);  // Note: this interrupt must have "Preemption Priority" higher than htim13
 }
 
 extern "C" void MainLoop(void) {
@@ -113,32 +122,49 @@ static void LvglInit(void) {
 	lv_indev_drv_register(&indev_drv);
 }
 
-static void LvglRefresh(TIM_HandleTypeDef* htim) {
+static void LvglTick(TIM_HandleTypeDef* htim) {
 	lv_tick_inc(5);
+}
+
+static void LvglTask(TIM_HandleTypeDef* htim) {
 	lv_task_handler();
 }
 
 static void FlushBufferStart(lv_disp_drv_t* drv, const lv_area_t* area, lv_color_t* buffer) {
 	lv_coord_t width = lv_area_get_width(area);
 	lv_coord_t height = lv_area_get_height(area);
+
+#if !(LV_USE_GPU_STM32_DMA2D) || LV_COLOR_DEPTH == 16
+	// Not needed if dma2d is used - dma2d does not use L1 cache so cache does not need to be flushed.
+	// In 16B color mode is mixed (dma2d/non-dma2d) mode, hence buffer must be flushed
 	uint32_t bufferLength = width * height * sizeof(lv_color_t);
-	//while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
 	SCB_CleanDCache_by_Addr((uint32_t*)buffer, bufferLength);  // flush d-cache to SRAM before starting DMA transfer
-	// Note: CR mode can be set to 0 (no PFC) if FG and OUT color formats are the same (FGPFCCR=OPFCCR)
-	DMA2D->CR = 0x1U << DMA2D_CR_MODE_Pos; // Memory-to-memory with PFC (FG fetch only with FG PFC active)
+#endif
+
+	// while((DMA2D->CR & DMA2D_CR_START) != 0U); // wait for the previous transfer to finish
+
+#if LV_COLOR_DEPTH == 16
+	DMA2D->CR = 0x1U << DMA2D_CR_MODE_Pos;  // Memory-to-memory with PFC (FG fetch only with FG PFC active)
+	DMA2D->FGPFCCR = DMA2D_INPUT_RGB565;
+#elif LV_COLOR_DEPTH == 32
+	DMA2D->CR = 0x0U << DMA2D_CR_MODE_Pos;  // Memory-to-memory (FG fetch only)
 	DMA2D->FGPFCCR = DMA2D_INPUT_ARGB8888;
+#else
+#error "Only LV_COLOR_DEPTH 16 and 32 are supported"
+#endif
 	DMA2D->FGMAR = (uint32_t)buffer;
 	DMA2D->FGOR = 0;
+
 	DMA2D->OPFCCR = DMA2D_OUTPUT_ARGB8888;
-	//DMA2D->OPFCCR |= (0x1U << DMA2D_OPFCCR_RBS_Pos); // emulate R/B color swap
+	// DMA2D->OPFCCR |= (0x1U << DMA2D_OPFCCR_RBS_Pos); // emulate R/B color swap
 	DMA2D->OMAR = LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1);
 	DMA2D->OOR = SCREEN_WIDTH - width;
 	DMA2D->NLR = (width << DMA2D_NLR_PL_Pos) | (height << DMA2D_NLR_NL_Pos);
-	DMA2D->IFCR = 0x3FU; // trigger ISR flags reset
-	DMA2D->CR |= DMA2D_CR_TCIE; // transfer complete interrupt enable
-    DMA2D->CR |= DMA2D_CR_START;
-	//while((DMA2D->CR & DMA2D_CR_START) != 0U);
-	//lv_disp_flush_ready(&_disp_drv);
+	DMA2D->IFCR = 0x3FU;         // trigger ISR flags reset
+	DMA2D->CR |= DMA2D_CR_TCIE;  // enable transfer complete interrupt
+	DMA2D->CR |= DMA2D_CR_START;
+	// while((DMA2D->CR & DMA2D_CR_START) != 0U);
+	// lv_disp_flush_ready(&_disp_drv);
 }
 
 static void FlushBufferComplete(DMA2D_HandleTypeDef* hdma2d) {
@@ -179,6 +205,7 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 	lastTimeCalled = HAL_GetTick();
 
 	if (GPIO_Pin == B_USER_Pin) {
+		HAL_TIM_Base_Stop_IT(&htim13);
 		HAL_TIM_Base_Stop_IT(&htim14);
 		lv_deinit();
 		LvglInit();
@@ -186,37 +213,89 @@ extern "C" void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 		++i %= 5;
 
 		switch (i) {
-		case 0: {
+		case 0:
 			HelloWorld();
 			break;
-		}
-		case 1: {
+		case 1:
 			lv_demo_widgets();
 			break;
-		}
-		case 2: {
+		case 2:
 			lv_demo_benchmark();
 			break;
-		}
-		case 3: {
+		case 3:
 			lv_demo_stress();
 			break;
-		}
-		case 4: {
+		case 4:
 			lv_demo_music();
 			break;
 		}
-		}
+
+		HAL_TIM_Base_Start_IT(&htim13);
 		HAL_TIM_Base_Start_IT(&htim14);
 	}
 }
 
-/* FlushBufferStart() without using DMA2D
+static bool MpuRamConfig(uint32_t address, uint32_t size) {
+	// Refer to: AN4838 - managing memory protection unit in STM32 MCUs
+	assert_param(address % CACHE_ROW_SIZE == 0);
+	assert_param(size % CACHE_ROW_SIZE == 0);
+	uint32_t regionSize = 0x80000000;  // 2GB
+	uint8_t sizeCode = MPU_REGION_SIZE_2GB;
+	MPU_Region_InitTypeDef mpuInitStruct;
+
+	mpuInitStruct.Enable = MPU_REGION_ENABLE;
+	mpuInitStruct.AccessPermission = MPU_REGION_FULL_ACCESS;
+	mpuInitStruct.IsCacheable = MPU_ACCESS_NOT_CACHEABLE;    // always disable cache
+	mpuInitStruct.IsBufferable = MPU_ACCESS_NOT_BUFFERABLE;  // MPU_ACCESS_(NOT)_BUFFERABLE
+	mpuInitStruct.IsShareable = MPU_ACCESS_NOT_SHAREABLE;    // not supported by Cortex-M7?
+	mpuInitStruct.Number = 0;
+	mpuInitStruct.TypeExtField = MPU_TEX_LEVEL0;  // strongly ordered
+	mpuInitStruct.SubRegionDisable = 0x00;        // no subregions disabled
+	mpuInitStruct.DisableExec = MPU_INSTRUCTION_ACCESS_DISABLE;
+
+	HAL_MPU_Disable();
+
+	while (size > 0) {
+		if (size >= regionSize) {
+			if (mpuInitStruct.Number > 7) {
+				return false;  // all the available regions are already used
+			} else if (regionSize < 32) {
+				return false;  // required region size is smaller than 32B, probably size was not 32B aligned
+			}
+			mpuInitStruct.BaseAddress = address;
+			mpuInitStruct.Size = sizeCode;
+			HAL_MPU_ConfigRegion(&mpuInitStruct);
+			mpuInitStruct.Number++;
+			size -= regionSize;
+			address += regionSize;
+		}
+		regionSize /= 2;
+		sizeCode--;
+	}
+
+	if (size != 0) {
+		return false;  // not entire memory region was configured, probably size was not 32B aligned
+	}
+
+	HAL_MPU_Enable(MPU_PRIVILEGED_DEFAULT);
+	return true;
+	// Deactivate speculative/cache access to first FMC Bank to save FMC bandwidth - IF SDRAM is used
+	// AN4861 p.49: 4.6.1 Disable FMC bank1 if not used
+	// FMC_Bank1->BTCR[0] = 0x000030D2;
+}
+
+/* FlushBufferStart() //without using DMA2D
 static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_color_t* buffer) {
     int32_t srcLineSize = LCD_BPP * (area->x2 - area->x1 + 1);
     int32_t dstLineSize = LCD_BPP * SCREEN_WIDTH;
     char* src = (char*)buffer;
     char* dst = (char*)(LCD_FB_START_ADDRESS + LCD_BPP * (area->y1 * SCREEN_WIDTH + area->x1));
+#if LV_USE_GPU_STM32_DMA2D
+	lv_coord_t width = lv_area_get_width(area);
+	lv_coord_t height = lv_area_get_height(area);
+	uint32_t bufferLength = width * height * sizeof(lv_color_t);
+	SCB_InvalidateDCache_by_Addr((uint32_t*)buffer, bufferLength);  // invalidate cache before reading memory after dma2d transfer
+#endif
 
     for (int32_t y = area->y1; y < area->y2; y++) {
         // copy buffer to display line by line
@@ -225,8 +304,9 @@ static void FlushBufferStart(lv_disp_drv_t* disp, const lv_area_t* area, lv_colo
         dst += dstLineSize;
     }
     memcpy(dst, src, srcLineSize);  // copy the last line
+
     SCB_CleanDCache_by_Addr((uint32_t*)LCD_FB_START_ADDRESS, SCREEN_WIDTH * SCREEN_HEIGHT * LCD_BPP);
 
-    if (disp != NULL) lv_disp_flush_ready(disp);  // Indicate you are ready with the flushing
+    if (disp != NULL) lv_disp_flush_ready(disp);  // notify LVGL flushing is done
 }
 */
