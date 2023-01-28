@@ -1,4 +1,4 @@
-# STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo
+# STM32F769NI Discovery Kit (STM32F769I-DISCO) LCD Demo with LVGL and full DMA2D aka ChromART support
 Content of this repo demonstrates how to use LCD display on [STM32F769I-DISCO](https://www.st.com/en/evaluation-tools/32f769idiscovery.html) board with [LVGL](https://github.com/lvgl/lvgl) embedded graphics library without OS (bare-metal). Example shows how to set up VS Code development environment, including build and OCD step debugging.  
 
 This repo uses submodules, to clone execute:  
