@@ -6,7 +6,8 @@
 		"linkerScript": "STM32F769NIHX_FLASH.ld",
 		"cpu": "-mcpu=cortex-m7",
 		"fpu": "-mfpu=fpv5-d16 -mfloat-abi=hard",
-		"extraSearchPaths": "-IDrivers/CMSIS/Device/ST/STM32F7xx/Include -IDrivers/CMSIS/Include"
+		"extraSearchPaths": "-IDrivers/CMSIS/Device/ST/STM32F7xx/Include -IDrivers/CMSIS/Include",
+		"dFile": "${buildOutput}/${fileDirectory}/${fileName}.d"
 	},
 	"configurations": [
 		{
@@ -29,7 +30,7 @@
 					"outputFile": "${buildOutput}/${fileDirectory}/${fileName}.o",
 					"trimIncludePaths": true,
 					"params": {
-						"flags": "${cpu} ${fpu} --specs=nano.specs -mthumb -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF[${outputFile}] -MT[${outputFile}]"
+						"flags": "${cpu} ${fpu} --specs=nano.specs -mthumb -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF[${dFile}] -MT[${outputFile}]"
 					},
 					"command": "arm-none-eabi-gcc -std=gnu17 -c ${flags} ${buildTypeFlags} (-I[$${includePath}]) (-D$${defines}) (-include [$${forcedInclude}]) [${filePath}] -o [${outputFile}] ${extraSearchPaths}"
 				},
@@ -39,13 +40,13 @@
 					"outputFile": "${buildOutput}/${fileDirectory}/${fileName}.o",
 					"trimIncludePaths": true,
 					"params": {
-						"flags": "${cpu} ${fpu} --specs=nano.specs -mthumb -ffunction-sections -fdata-sections -fno-rtti -fno-use-cxa-atexit -Wall -fstack-usage -MMD -MP -MF[${outputFile}] -MT[${outputFile}]"
+						"flags": "${cpu} ${fpu} --specs=nano.specs -mthumb -ffunction-sections -fdata-sections -fno-rtti -fno-use-cxa-atexit -Wall -fstack-usage -MMD -MP -MF[${dFile}] -MT[${outputFile}]"
 					},
 					"command": "arm-none-eabi-g++ -std=gnu++17 -c ${flags} ${buildTypeFlags} (-I[$${includePath}]) (-D$${defines}) (-include [$${forcedInclude}]) [${filePath}] -o [${outputFile}] ${extraSearchPaths}"
 				},
 				{
 					"name": "Assembly Compile",
-					"filePattern": "**/*.s",
+					"filePattern": "**/*.\\{s,S\\}",
 					"outputFile": "${buildOutput}/${fileDirectory}/${fileName}.o",
 					"trimIncludePaths": true,
 					"params": {
