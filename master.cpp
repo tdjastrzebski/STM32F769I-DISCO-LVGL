@@ -1,5 +1,5 @@
 /*---------------------------------------------------------------------------------------------------
- *  Copyright (c) 2021-2022 Tomasz Jastrzębski. All rights reserved.
+ *  Copyright (c) 2021-2023 Tomasz Jastrzębski. All rights reserved.
  *  Licensed under the GPL 3.0 License. See LICENSE file in the project root for license information.
  *-------------------------------------------------------------------------------------------------*/
 #include "master.h"
